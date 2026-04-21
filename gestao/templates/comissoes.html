@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'gestao/css/comissoes.css' %}">
+    <style>
+        /* Ajuste para a tabela única */
+        .card-tabela { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 100px; }
+
+        .footer-fixo {
+            position: fixed;
+            bottom: 0;
+            /* Altera aqui: em vez de left 0, usamos a largura da sidebar */
+            left: 250px; 
+            /* Altera aqui: a largura agora é 100% MENOS a largura da sidebar */
+            width: calc(100% - 250px); 
+            
+            background: #fff;
+            border-top: 2px solid #e2e8f0;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 900;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        
+
+        .btn-imprimir-geral {
+            background: #f8fafc; border: 1px solid #cbd5e1; color: #334155;
+            padding: 8px 16px; border-radius: 6px; text-decoration: none;
+            display: flex; align-items: center; gap: 8px; font-weight: 600;
+        }
+    </style>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<div class="page-header">
+    <h1>Gestão de Comissões</h1>
+    <p>Acertos pendentes de mergulhos realizados</p>
+</div>
+
+<div class="card-filtros area-nao-imprimivel">
+    <form method="GET" class="fields-row" style="align-items: flex-end;">
+        <div class="field-group">
+            <label>Início</label>
+            <input type="date" name="inicio" value="{{ filtros.inicio }}" class="modern-input">
+        </div>
+        <div class="field-group">
+            <label>Fim</label>
+            <input type="date" name="fim" value="{{ filtros.fim }}" class="modern-input">
+        </div>
+        <div class="field-group">
+            <label>Vendedor</label>
+            <select name="vendedor" class="modern-input">
+                <option value="">Todos os Vendedores</option>
+                {% for v in vendedores_list %}
+                <option value="{{ v.id }}" {% if filtros.vendedor_id == v.id|stringformat:"s" %}selected{% endif %}>{{ v.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-filtrar">Filtrar</button>
+    </form>
+</div>
+
+<div class="card-tabela">
+    <table class="operacao-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;" class="centro">
+                    <input type="checkbox" id="check-mestre" onchange="marcarTodos(this)">
+                </th>
+                <th style="width: 100px;">Data</th>
+                <th>Vendedor</th>
+                <th>Cliente</th>
+                <th>Quantidade</th>
+                <th class="direita">Pago Acqua</th>
+                <th class="direita">Pago Vend.</th>
+                <th class="direita">Saldo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in comissoes %}
+            <tr class="linha-comissao" data-vendedor="{{ c.vendedor }}">
+                <td class="centro">
+                    <input type="checkbox" class="checkbox-custom check-item" 
+                           value="{{ c.ids_cr }}" 
+                           data-saldo="{{ c.saldo|stringformat:'f' }}"
+                           onchange="atualizarResumo()">
+                </td>
+                <td>{{ c.data|date:"d/m/Y" }}</td>
+                <td style="font-weight: 600;">{{ c.vendedor }}</td>
+                <td>{{ c.cliente }}</td>
+                <td><span class="badge-atv">{{ c.quantidade }}</span></td>
+                <td class="direita color-acqua">R$ {{ c.pago_acqua|floatformat:2 }}</td>
+                <td class="direita color-vend">R$ {{ c.pago_vendedor|floatformat:2 }}</td>
+                <td class="direita" style="font-weight: bold;">
+                    {% if c.saldo > 0 %}
+                        <span style="color: #991b1b;">+ R$ {{ c.saldo|floatformat:2 }}</span>
+                    {% elif c.saldo < 0 %}
+                        <span style="color: #166534;">- R$ {{ c.saldo_abs|floatformat:2 }}</span>
+                    {% else %}
+                        <span style="color: #94a3b8;">R$ 0,00</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="centro" style="padding: 50px; color: #94a3b8;">Nenhum acerto pendente encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="footer-fixo">
+    <div id="info-selecao" style="font-weight: 600; color: #334155;">
+        Nenhum item selecionado
+    </div>
+    
+    <div style="display: flex; gap: 15px;">
+        {% if filtros.vendedor_id %}
+        <a href="{% url 'print_comissoes' %}?vendedor={{ filtros.vendedor_id }}&inicio={{ filtros.inicio }}&fim={{ filtros.fim }}" 
+           target="_blank" class="btn-imprimir-geral">
+            <span class="material-symbols-outlined">print</span> Imprimir Extrato
+        </a>
+        {% endif %}
+
+        <button type="button" class="btn-liquidar" id="btn-liquidar-geral" disabled onclick="prepararModal()">
+            <span class="material-symbols-outlined">payments</span> Liquidar Selecionados
+        </button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-pagamento" style="display: none;">
+    <div class="modal-content">
+        <h2 id="modal-titulo" style="margin-top: 0;">Confirmar Liquidação</h2>
+        <div id="modal-resumo" class="resumo-modal"></div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="cr_ids" id="modal-ids-ocultos">
+            <div class="fields-row" style="margin-bottom: 20px;">
+                <div class="field-group">
+                    <label>Data do Acerto</label>
+                    <input type="date" name="data_acerto" class="modern-input" value="{% now 'Y-m-d' %}" required>
+                </div>
+                <div class="field-group">
+                    <label>Forma de Pagamento</label>
+                    <select name="forma_pg_acerto" class="modern-input" required>
+                        <option value="PIX">Pix</option>
+                        <option value="DINHEIRO">Dinheiro</option>
+                        <option value="COMPENSACAO">Abatimento</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn-salvar">Confirmar e Lançar no Caixa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function marcarTodos(master) {
+        document.querySelectorAll('.check-item').forEach(cb => cb.checked = master.checked);
+        atualizarResumo();
+    }
+
+    function atualizarResumo() {
+        let selecionados = document.querySelectorAll('.check-item:checked');
+        let total = 0;
+        let nomesVendedores = new Set();
+
+        selecionados.forEach(cb => {
+            total += parseFloat(cb.getAttribute('data-saldo').replace(',', '.'));
+            nomesVendedores.add(cb.closest('tr').getAttribute('data-vendedor'));
+        });
+
+        const btn = document.getElementById('btn-liquidar-geral');
+        const info = document.getElementById('info-selecao');
+
+        if (selecionados.length > 0) {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            let txtVendedores = Array.from(nomesVendedores).join(', ');
+            info.innerHTML = `Selecionados: ${selecionados.length} itens | Saldo: R$ ${total.toFixed(2)} (${txtVendedores})`;
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            info.innerText = "Nenhum item selecionado";
+        }
+    }
+
+    function prepararModal() {
+        let selecionados = document.querySelectorAll('.check-item:checked');
+        let total = 0;
+        let ids = [];
+        selecionados.forEach(cb => {
+            total += parseFloat(cb.getAttribute('data-saldo').replace(',', '.'));
+            ids.push(cb.value);
+        });
+
+        document.getElementById('modal-ids-ocultos').value = ids.join(',');
+        let resumo = document.getElementById('modal-resumo');
+        
+        if (total > 0) {
+            resumo.innerHTML = `Vendedores devem repassar: <strong style="color:#991b1b">R$ ${total.toFixed(2)}</strong>`;
+        } else if (total < 0) {
+            resumo.innerHTML = `Acqua deve pagar: <strong style="color:#166534">R$ ${Math.abs(total).toFixed(2)}</strong>`;
+        } else {
+            resumo.innerHTML = `Saldo Zerado (Compensação)`;
+        }
+        document.getElementById('modal-pagamento').style.display = 'flex';
+    }
+
+    function fecharModal() { document.getElementById('modal-pagamento').style.display = 'none'; }
+</script>
+{% endblock 'body' %}

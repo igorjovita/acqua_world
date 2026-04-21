@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acqua World - Reserva</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: #f1f5f9; margin: 0; height: 100vh; overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: #091521; color: white; padding: 15px;
+            position: fixed; top: 0; width: 100%; height: 60px;
+            display: flex; align-items: center; z-index: 100;
+        }
+
+        /* ÁREA DO FORMULÁRIO */
+        main {
+            position: absolute; top: 60px; bottom: 75px; width: 100%;
+            overflow-y: auto; padding: 15px; padding-bottom: 100px;
+        }
+
+        .secao-titulo { font-size: 14px; font-weight: bold; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 5px; }
+
+        /* INPUTS ESTILO APP */
+        .field-group { background: white; border-radius: 12px; padding: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { 
+            width: 100%; border: none; font-size: 16px; color: #0f172a; outline: none; background: transparent; 
+            padding: 5px 0;
+        }
+
+        /* CARD DO PASSAGEIRO */
+        .card-passageiro {
+            background: white; border-radius: 15px; padding: 15px;
+            margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn-remover {
+            position: absolute; top: 10px; right: 10px; color: #ef4444; background: #fee2e2;
+            border: none; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* BOTÃO FLUTUANTE DE ADICIONAR */
+        .btn-add {
+            background: #f0f9ff; color: #0ea5e9; border: 2px dashed #bae6fd;
+            width: 100%; padding: 15px; border-radius: 12px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 30px;
+        }
+
+        /* BARRA DE AÇÕES FIXA */
+        .action-bar {
+            position: fixed; bottom: 0; width: 100%; height: 75px;
+            background: white; border-top: 1px solid #e2e8f0;
+            display: flex; align-items: center; padding: 0 15px; gap: 10px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .btn-voltar { flex: 1; text-decoration: none; text-align: center; color: #64748b; font-weight: 600; }
+        .btn-salvar { flex: 2; background: #0ea5e9; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); }
+    </style>
+</head>
+<body>
+
+<form method="POST" id="form-reserva">
+    {% csrf_token %}
+    <input type="hidden" name="reserva_id_edicao" id="reserva_id_edicao">
+
+    <header>
+        <span style="font-weight: bold; letter-spacing: 1px;">NOVA RESERVA</span>
+    </header>
+
+    <main>
+        <div class="secao-titulo">Dados da Reserva</div>
+        
+        <div class="field-group">
+            <label>Data do Passeio</label>
+            <input type="date" name="data" id="data_reserva" required>
+        </div>
+
+        <div class="field-group">
+            <label>Vendedor</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select name="vendedor" id="vendedor_reserva" style="flex: 1;" required>
+                    <option value="">Selecione...</option>
+                    {% for v in vendedores %}
+                    <option value="{{ v.id }}">{{ v.nome }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="openModalVendedor()" style="background: #0f172a; color: white; border: none; border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="container-passageiros">
+            <div class="secao-titulo">Mergulhadores</div>
+            </div>
+
+        <button type="button" class="btn-add" onclick="addPassageiro()">
+            <span class="material-symbols-outlined">person_add</span> Adicionar Outro
+        </button>
+    </main>
+
+    <div class="action-bar">
+        <a href="{% url 'homepage' %}" class="btn-voltar">Cancelar</a>
+        <button type="submit" class="btn-salvar">Salvar Reserva</button>
+    </div>
+</form>
+<div id="modalVendedor" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:white; padding:25px; border-radius:15px; width:100%; max-width:400px;">
+        <h3 style="margin-top:0;">Cadastrar Vendedor</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="form" value="form-vendedor">
+            
+            <div class="field-group" style="background:#f1f5f9; margin-bottom:15px;">
+                <label>Nome do Vendedor</label>
+                <input type="text" name="nome_vendedor" required>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div class="field-group" style="background:#f1f5f9;">
+                    <label>Neto BAT</label>
+                    <input type="number" step="0.01" name="neto_bat" value="0">
+                </div>
+                <div class="field-group" style="background:#f1f5f9;">
+                    <label>Neto ACP</label>
+                    <input type="number" step="0.01" name="neto_acp" value="0">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="closeModalVendedor()" style="flex:1; padding:15px; border:none; border-radius:10px; background:#e2e8f0; font-weight:bold;">Cancelar</button>
+                <button type="submit" style="flex:1; padding:15px; border:none; border-radius:10px; background:#0ea5e9; color:white; font-weight:bold;">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const atividades = {{ atividades_json|safe }};
+    const dadosEdicao = {{ dados_edicao_json|safe }};
+    let contador = 0;
+
+    function addPassageiro(dados = null) {
+        const container = document.getElementById('container-passageiros');
+        const id = contador++;
+        
+        const card = document.createElement('div');
+        card.className = 'card-passageiro';
+        card.id = `card-${id}`;
+        
+        card.innerHTML = `
+            ${id > 0 ? `<button type="button" class="btn-remover" onclick="removePassageiro(${id})">&times;</button>` : ''}
+            <input type="hidden" name="cr_id" value="${dados ? dados.cr_id : ''}">
+            
+            <div class="field-group">
+                <label>Nome Completo</label>
+                <input type="text" name="nome" value="${dados ? dados.nome : ''}" required>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="field-group" style="flex: 1;">
+                    <label>Telefone</label>
+                    <input type="tel" name="telefone" value="${dados ? dados.telefone : ''}" placeholder="(22) 99999-9999">
+                </div>
+                <div class="field-group" style="flex: 1;">
+                    <label>CPF / Documento</label>
+                    <input type="text" name="documento" value="${dados ? dados.documento : ''}" placeholder="Opcional">
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="field-group" style="flex: 1;">
+                    <label>Altura (m)</label>
+                    <input type="number" step="0.01" name="altura" value="${dados ? dados.altura : ''}" placeholder="Ex: 1.75">
+                </div>
+                <div class="field-group" style="flex: 1;">
+                    <label>Peso (kg)</label>
+                    <input type="number" step="0.1" name="peso" value="${dados ? dados.peso : ''}" placeholder="Ex: 80">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="field-group" style="flex: 1;">
+                    <label>Atividade</label>
+                    <select name="atividade" onchange="atualizarPreco(${id}, this)" required>
+                        <option value="">Escolha...</option>
+                        ${atividades.map(a => `<option value="${a.id}" ${dados && dados.atividade == a.id ? 'selected' : ''}>${a.apelido}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field-group" style="flex: 1;">
+                    <label>Valor a receber</label>
+                    <input type="number" step="0.01" name="valor" id="valor-${id}" value="${dados ? dados.valor : ''}" required>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label>Sinal? (Sim ou Não)</label>
+                <select name="tem_sinal" onchange="toggleSinal(${id}, this)">
+                    <option value="nao" ${dados && dados.tem_sinal == 'nao' ? 'selected' : ''}>Não</option>
+                    <option value="sim" ${dados && dados.tem_sinal == 'sim' ? 'selected' : ''}>Sim (Adiantado)</option>
+                </select>
+            </div>
+
+            <div id="box-sinal-${id}" style="display: ${dados && dados.tem_sinal == 'sim' ? 'block' : 'none'}; background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px solid #fde68a;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div style="flex: 1;">
+                        <label>Valor Sinal</label>
+                        <input type="number" step="0.01" name="valor_sinal" value="${dados ? dados.valor_sinal : ''}">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Forma</label>
+                        <select name="forma_pg_sinal">
+                            <option value="PIX" ${dados && dados.forma_pg_sinal == 'PIX' ? 'selected' : ''}>Pix</option>
+                            <option value="DINHEIRO" ${dados && dados.forma_pg_sinal == 'DINHEIRO' ? 'selected' : ''}>Dinheiro</option>
+                        </select>
+                    </div>
+                </div>
+                <label>Recebedor</label>
+                <select name="recebedor_sinal">
+                    <option value="LOJA" ${dados && dados.recebedor_sinal == 'LOJA' ? 'selected' : ''}>Loja (Acqua)</option>
+                    <option value="VENDEDOR" ${dados && dados.recebedor_sinal == 'VENDEDOR' ? 'selected' : ''}>Vendedor (Reteve)</option>
+                </select>
+            </div>
+        `;
+        
+        container.appendChild(card);
+    }
+
+    function removePassageiro(id) { document.getElementById(`card-${id}`).remove(); }
+
+    function toggleSinal(id, el) {
+        document.getElementById(`box-sinal-${id}`).style.display = (el.value === 'sim') ? 'block' : 'none';
+    }
+
+    function atualizarPreco(id, el) {
+        const atv = atividades.find(a => a.id == el.value);
+        if (atv) document.getElementById(`valor-${id}`).value = atv.valor_padrao;
+    }
+
+    // Carregamento inicial (Edição ou Nova)
+    window.onload = () => {
+        if (dadosEdicao) {
+            document.getElementById('reserva_id_edicao').value = dadosEdicao.reserva_id;
+            document.getElementById('data_reserva').value = dadosEdicao.data;
+            document.getElementById('vendedor_reserva').value = dadosEdicao.vendedor;
+            dadosEdicao.clientes.forEach(c => addPassageiro(c));
+        } else {
+            addPassageiro(); // Começa com um mergulhador vazio
+        }
+    };
+
+    function openModalVendedor() { document.getElementById('modalVendedor').style.display = 'flex'; }
+    function closeModalVendedor() { document.getElementById('modalVendedor').style.display = 'none'; }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'gestao/css/pagamentos.css' %}">
+{% endblock 'head' %}
+
+{% block 'body' %}
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 style="color: #091521; margin: 0; font-size: 24px;">Caixa & Check-in</h1>
+            <p style="color: #64748b; font-size: 15px; margin-top: 5px; font-weight: 500;">
+                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: text-bottom;">point_of_sale</span>
+                Acertos do dia
+            </p>
+        </div>
+        
+        <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+            <input type="date" name="data" value="{{ filtro_data }}" class="modern-input" style="height: 40px;">
+            <button type="submit" class="btn-filtrar" style="height: 40px;">Buscar</button>
+        </form>
+    </div>
+
+    <div class="card-tabela">
+        <table class="operacao-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Clientes</th>
+                    <th style="width: 15%;">Vendedor</th>
+                    <th style="width: 12%; text-align: center;">Pago Vendedor</th>
+                    <th style="width: 12%; text-align: center;">Pago Acqua</th>
+                    <th style="width: 12%; text-align: center;">Total Reserva</th>
+                    <th style="width: 12%; text-align: center;">A Receber</th>
+                    <th style="width: 10%; text-align: center;">Status</th>
+                    <th style="width: 7%; text-align: center;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservas %}
+                <tr>
+                    <td style="font-weight: 600; color: #0f172a; text-align: center;">{{ res.nome_exibicao }}</td>
+                    <td style="text-align: center;">{{ res.vendedor }}</td>
+                    <td style="text-align: center; color: #b45309;">R$ {{ res.pago_vendedor|floatformat:2 }}</td>
+                    <td style="text-align: center; color: #166534;">R$ {{ res.pago_acqua|floatformat:2 }}</td>
+                    <td style="text-align: center; color: #64748b;">R$ {{ res.total_reserva|floatformat:2 }}</td>
+                    <td style="text-align: center; font-weight: bold; color: {% if res.valor_a_receber > 0 %}#ef4444{% else %}#64748b{% endif %};">
+                        R$ {{ res.valor_a_receber|floatformat:2 }}
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge-status {% if res.status == 'PAGO' %}badge-pago{% else %}badge-pendente{% endif %}">
+                            {{ res.status }}
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <button class="btn-acao-icone {% if res.status == 'PAGO' %}btn-desabilitado{% endif %}" 
+                                {% if res.status == 'PAGO' %}disabled{% endif %}
+                                onclick="abrirModalAcerto('{{ res.id }}', '{{ res.nome_exibicao }}', {{ res.valor_a_receber|stringformat:'f' }}, '{{ res.passageiros_json|escapejs }}')">
+                            <span class="material-symbols-outlined">payments</span>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="modal-acerto" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="modal-titulo-reserva">Acerto: Igor + 1</h2>
+                <div class="resumo-saldo">
+                    <span>Falta Pagar:</span>
+                    <strong id="modal-saldo-total">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <form method="POST" action="{% url 'pagamentos' %}">
+                {% csrf_token %}
+                <input type="hidden" name="reserva_id" id="modal-reserva-id">
+                
+                <div class="toggle-container">
+                    <label>Como o cliente vai pagar o restante?</label>
+                    <select name="tipo_acerto" id="tipo_acerto" class="modern-input" onchange="alternarModoPagamento()">
+                        <option value="grupo">Tudo Junto (Pagamento Único)</option>
+                        <option value="individual">Separado (Cada um paga sua parte)</option>
+                    </select>
+                </div>
+
+                <div id="bloco-pg-grupo" class="bloco-pagamento ativo">
+                    <div class="fields-row" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div class="field-group" style="flex: 1;">
+                            <label>Valor a Receber (R$):</label>
+                            <input type="number" step="0.01" name="valor_grupo" id="input-valor-grupo" class="modern-input" readonly>
+                        </div>
+                        <div class="field-group" style="flex: 2;">
+                            <label>Forma de Pagamento:</label>
+                            <select name="forma_pg_grupo" id="select-forma-grupo" class="modern-input" required>
+                                <option value="" disabled selected hidden>Selecione...</option>
+                                <option value="PIX">Pix</option>
+                                <option value="DINHEIRO">Dinheiro</option>
+                                <option value="CREDITO">Crédito</option>
+                                <option value="DEBITO">Débito</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bloco-pg-individual" class="bloco-pagamento">
+                    <div id="container-passageiros-pagamento">
+                        </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalAcerto()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">Confirmar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="{% static 'gestao/js/pagamentos.js' %}"></script>
+{% endblock 'body' %}

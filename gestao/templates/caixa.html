@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block 'head' %}
+<style>
+    .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .page-header h1 { color: #091521; font-size: 24px; margin: 0 0 5px 0; }
+    
+    /* CARDS SUPERIORES */
+    .metricas-row { display: flex; gap: 20px; margin-bottom: 25px; }
+    .card-metrica { flex: 1; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .card-metrica h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; text-transform: uppercase; }
+    .card-metrica .valor { font-size: 28px; font-weight: bold; }
+    .valor-entrada { color: #16a34a; }
+    .valor-saida { color: #dc2626; }
+    .valor-saldo { color: #0f172a; }
+
+    /* LAYOUT DUPLO (ENTRADAS E SAIDAS) */
+    .caixa-container { display: flex; gap: 20px; align-items: flex-start; }
+    .coluna-caixa { flex: 1; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    
+    .titulo-coluna { padding: 15px 20px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px;}
+    .bg-entradas { background: #f0fdf4; color: #166534; }
+    .bg-saidas { background: #fef2f2; color: #991b1b; }
+
+    /* TABELAS */
+    .table-caixa { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-caixa td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .table-caixa tr:hover { background-color: #f8fafc; }
+    .table-caixa tr:last-child td { border-bottom: none; }
+    .tag-pg { font-size: 11px; padding: 4px 8px; background: #e2e8f0; border-radius: 4px; color: #475569; font-weight: 600; text-transform: uppercase; }
+
+    /* BOTOES E MODAL */
+    .modern-input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; height: 42px; box-sizing: border-box; }
+    .btn-filtrar { background: #0f172a; color: white; border: none; padding: 0 20px; border-radius: 6px; height: 42px; cursor: pointer; font-weight: 500;}
+    .btn-lancamento { background: #0ea5e9; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; height: 42px;}
+    .btn-lancamento:hover { background: #0284c7; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+</style>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<div class="page-header">
+    <div>
+        <h1>Fluxo de Caixa Diário</h1>
+        <p style="color: #64748b; margin-top: 5px;">Controle de entradas, saídas e repasses</p>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+        <form method="GET" style="display: flex; gap: 8px;">
+            <input type="date" name="data" value="{{ data_filtro }}" class="modern-input">
+            <button type="submit" class="btn-filtrar">Ver Caixa</button>
+        </form>
+        <button class="btn-lancamento" onclick="document.getElementById('modal-lancamento').style.display='flex'">
+            <span class="material-symbols-outlined" style="font-size: 20px;">account_balance_wallet</span> Novo Lançamento
+        </button>
+    </div>
+</div>
+
+<div class="metricas-row">
+    <div class="card-metrica">
+        <h3>Total Entradas</h3>
+        <div class="valor valor-entrada">+ R$ {{ total_entradas|floatformat:2 }}</div>
+    </div>
+    <div class="card-metrica">
+        <h3>Total Saídas</h3>
+        <div class="valor valor-saida">- R$ {{ total_saidas|floatformat:2 }}</div>
+    </div>
+    <div class="card-metrica" style="background: {% if saldo_dia >= 0 %}#f0fdf4{% else %}#fef2f2{% endif %}; border-color: {% if saldo_dia >= 0 %}#bbf7d0{% else %}#fecaca{% endif %};">
+        <h3 style="color: {% if saldo_dia >= 0 %}#166534{% else %}#991b1b{% endif %};">Saldo do Dia</h3>
+        <div class="valor valor-saldo" style="color: {% if saldo_dia >= 0 %}#15803d{% else %}#b91c1c{% endif %};">
+            R$ {{ saldo_dia|floatformat:2 }}
+        </div>
+    </div>
+</div>
+
+<div class="caixa-container">
+    
+    <div class="coluna-caixa">
+        <div class="titulo-coluna bg-entradas">
+            <span class="material-symbols-outlined">arrow_downward</span> Entradas
+        </div>
+        <table class="table-caixa">
+            {% for op in entradas %}
+            <tr>
+                <td style="width: 60%; font-weight: 600;">{{ op.descricao }}</td>
+                <td style="text-align: center;"><span class="tag-pg">{{ op.forma_pg|default:"-" }}</span></td>
+                <td style="text-align: right; font-weight: bold; color: #166534;">R$ {{ op.valor|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 40px;">Nenhuma entrada registrada.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="coluna-caixa">
+        <div class="titulo-coluna bg-saidas">
+            <span class="material-symbols-outlined">arrow_upward</span> Saídas
+        </div>
+        <table class="table-caixa">
+            {% for op in saidas %}
+            <tr>
+                <td style="width: 60%; font-weight: 600;">{{ op.descricao }}</td>
+                <td style="text-align: center;"><span class="tag-pg">{{ op.forma_pg|default:"-" }}</span></td>
+                <td style="text-align: right; font-weight: bold; color: #b91c1c;">R$ {{ op.valor|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 40px;">Nenhuma saída registrada.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+
+<div class="modal-overlay" id="modal-lancamento">
+    <div class="modal-content">
+        <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #0f172a;">Lançamento de Caixa</h2>
+        
+        <form method="POST" action="{% url 'caixa' %}">
+            {% csrf_token %}
+            <input type="hidden" name="data" value="{{ data_filtro }}">
+            
+            <div class="fields-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; display: block;">Tipo de Operação</label>
+                    <select name="tipo" class="modern-input" required>
+                        <option value="SAIDA">Saída (Despesa/Retirada)</option>
+                        <option value="ENTRADA">Entrada (Depósito/Fundo)</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; display: block;">Forma de PG</label>
+                    <select name="forma_pg" class="modern-input" required>
+                        <option value="DINHEIRO">Dinheiro</option>
+                        <option value="PIX">Pix</option>
+                        <option value="CARTAO">Cartão</option>
+                        <option value="TRANSFERENCIA">Transferência</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; display: block;">Descrição</label>
+                <input type="text" name="descricao" class="modern-input" placeholder="Ex: SANGRIA, COMPRA DE ÁGUA..." required>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px; display: block;">Valor (R$)</label>
+                <input type="number" step="0.01" name="valor" class="modern-input" style="font-size: 18px; font-weight: bold;" required>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="document.getElementById('modal-lancamento').style.display='none'" style="padding: 10px 20px; background: #f1f5f9; color: #475569; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancelar</button>
+                <button type="submit" style="background: #0ea5e9; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar Lançamento</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock 'body' %}

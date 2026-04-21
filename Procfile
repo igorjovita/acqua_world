@@ -1,0 +1,1 @@
+web: gunicorn acquaworld.wsgi:application

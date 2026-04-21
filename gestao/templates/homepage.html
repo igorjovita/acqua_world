@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block 'head' %}
+    <link rel="stylesheet" href="{% static 'gestao/css/homepage.css' %}">
+{% endblock 'head' %}
+
+{% block 'body' %}
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+        <div>
+            <h1 style="color: #091521; margin: 0; font-size: 24px;">Filtros</h1>
+            
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'print_planilha' %}?data={{ filtros_atuais.data|default_if_none:'' }}&vendedor={{ filtros_atuais.vendedor|default_if_none:'' }}&atividade={{ filtros_atuais.atividade|default_if_none:'' }}" target="_blank" class="btn-imprimir" style="text-decoration: none; color: #334155; display: flex; align-items: center; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 20px;">print</span> Imprimir Planilha
+            </a>
+            
+            <a href="{% url 'sales' %}" class="btn-novo-registro">
+                <span class="material-symbols-outlined" style="font-size: 20px;">add_circle</span> Nova Reserva
+            </a>
+        </div> 
+    </div>
+
+    <div class="filtros-container">
+        <form method="GET" class="form-filtros">
+            
+            <div class="filtro-grupo">
+                <label for="data">Data</label>
+                <div class="input-com-icone">
+                    <span class="material-symbols-outlined">event</span>
+                    <input type="date" name="data" id="data" value="{{ filtros_atuais.data }}" class="filtro-input">
+                </div>
+            </div>
+            
+            <div class="filtro-grupo">
+                <label for="vendedor">Vendedor</label>
+                <div class="input-com-icone">
+                    <span class="material-symbols-outlined">storefront</span>
+                    <select name="vendedor" id="vendedor" class="filtro-input">
+                        <option value="">Todos</option>
+                        {% for v in vendedores %}
+                            <option value="{{ v.id }}" {% if filtros_atuais.vendedor == v.id|stringformat:"s" %}selected{% endif %}>{{ v.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filtro-grupo">
+                <label for="atividade">Atividade</label>
+                <div class="input-com-icone">
+                    <span class="material-symbols-outlined">scuba_diving</span>
+                    <select name="atividade" id="atividade" class="filtro-input">
+                        <option value="">Todas</option>
+                        {% for a in atividades %}
+                            <option value="{{ a.id }}" {% if filtros_atuais.atividade == a.id|stringformat:"s" %}selected{% endif %}>{{ a.apelido }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filtro-acoes">
+                <button type="submit" class="btn-filtrar">Buscar</button>
+                <a href="{% url 'homepage' %}" class="btn-limpar-filtro" title="Limpar Filtros">
+                    <span class="material-symbols-outlined">close</span>
+                </a>
+            </div>
+        </form>
+    </div>
+    <div style="display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap;">
+        {% for apelido, total in resumo_atividades.items %}
+            <div style="background: #fff; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">{{ apelido }}</span>
+                <span style="font-size: 16px; font-weight: 700; color: #0f172a; border-left: 1px solid #e2e8f0; padding-left: 10px;">{{ total }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card-tabela" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+        <div class="tabela-header" style="padding: 18px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px; color: #0f172a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                Lista de Embarque
+            </h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="operacao-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Cliente</th>
+                        <th style="width: 15%;">Telefone</th>
+                        <th style="width: 15%;">Vendedor</th>
+                        <th style="width: 15%; text-align: center;">Atividade</th>
+                        <th style="width: 15%; text-align: center;">Roupa</th>
+                        <th style="width: 15%; text-align: center;">Ações</th> </tr>
+                </thead>
+                <tbody>
+                    {% for op in operacoes %}
+                    <tr>
+                        <td class="td-nome">{{ op.cliente.nome }}</td>
+                        <td class="td-telefone">{{ op.cliente.telefone|default:"<span style='color:#ccc'>-</span>" }}</td>
+                        <td class="td-vendedor">{{ op.reserva.vendedor.nome }}</td>
+                        <td style="text-align: center;">
+                            <span class="badge-atividade badge-{{ op.atividade.apelido|lower }}">{{ op.atividade.apelido }}</span>
+                        </td>
+                        <td style="text-align: center; font-weight: 500; color: #475569;">
+                            {{ op.cliente.altura|default:"-"|floatformat:2 }}/{{ op.cliente.peso|default:"-"|floatformat:0 }}
+                        </td>
+                        <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
+                            <a href="{% url 'sales' %}?edit={{ op.reserva.id }}" class="btn-editar" title="Editar Reserva Completa">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                            </a>
+
+                            <form method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja cancelar a reserva de {{ op.cliente.nome }}?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_id" value="{{ op.id }}">
+                                <button type="submit" class="btn-apagar" title="Apagar Cliente">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <span class="material-symbols-outlined empty-icon">sentiment_dissatisfied</span>
+                            <h4>Nenhuma operação encontrada</h4>
+                            <p>Tente mudar a data ou limpar os filtros de busca.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock 'body' %}

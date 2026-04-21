@@ -1,0 +1,45 @@
+<style>
+    .caixa-container { display: flex; gap: 20px; width: 100%; }
+    .coluna-caixa { flex: 1; border: 1px solid #000; }
+    .coluna-caixa h2 { background: #000; color: #fff; margin: 0; padding: 10px; font-size: 16px; text-align: center; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ccc; padding: 8px; font-size: 12px; }
+    .total-row { background: #f1f5f9; font-weight: bold; }
+</style>
+
+<div class="caixa-container">
+    <div class="coluna-caixa">
+        <h2>ENTRADAS</h2>
+        <table>
+            {% for e in entradas %}
+            <tr>
+                <td>{{ e.descricao }}</td>
+                <td style="text-align: right;">R$ {{ e.valor }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td>TOTAL</td>
+                <td style="text-align: right;">R$ {{ total_entradas }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="coluna-caixa">
+        <h2>SAÍDAS</h2>
+        <table>
+            {% for s in saidas %}
+            <tr>
+                <td>{{ s.descricao }}</td>
+                <td style="text-align: right;">R$ {{ s.valor }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td>TOTAL</td>
+                <td style="text-align: right;">R$ {{ total_saidas }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div style="margin-top: 20px; font-weight: bold; font-size: 20px; text-align: center;">
+    SALDO DO DIA: R$ {{ saldo_dia }}
+</div>

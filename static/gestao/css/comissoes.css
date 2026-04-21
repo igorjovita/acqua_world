@@ -1,0 +1,74 @@
+.page-header { margin-bottom: 25px; }
+.page-header h1 { color: #091521; font-size: 24px; margin: 0 0 5px 0; }
+.page-header p { color: #64748b; font-size: 14px; margin: 0; font-weight: 500; }
+
+.card-filtros { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.fields-row { display: flex; flex-wrap: wrap; gap: 15px; }
+.field-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+.field-group label { font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+.modern-input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #f8fafc; height: 42px; box-sizing: border-box;}
+.btn-filtrar { background: #0f172a; color: white; border: none; padding: 0 24px; height: 42px; border-radius: 6px; cursor: pointer; font-weight: 500;}
+
+/* FATURA DO VENDEDOR */
+.fatura-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
+.fatura-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.fatura-header h2 { margin: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+
+.operacao-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.operacao-table th { color: #64748b; font-weight: 600; text-align: left; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-transform: uppercase; }
+.operacao-table td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.centro { text-align: center !important; }
+
+.fatura-footer { padding: 20px; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+.saldo-destaque { font-size: 18px; font-weight: bold; padding: 10px 20px; border-radius: 6px; }
+
+/* CORES DE STATUS */
+.status-devedor { background-color: #fee2e2; color: #991b1b; }
+.status-credor { background-color: #dcfce7; color: #166534; }
+.status-zerado { background-color: #f1f5f9; color: #64748b; }
+
+/* BOTÃO DE LIQUIDAR */
+.btn-liquidar { background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.2s;}
+.btn-liquidar:hover { background: #059669; }
+
+
+/* CSS NOVO PARA O MODAL E CHECKBOXES */
+.checkbox-custom { width: 18px; height: 18px; cursor: pointer; }
+.linha-selecionada { background-color: #f0f9ff !important; } /* Fica azul claro ao marcar */
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.modal-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+.modal-header h2 { margin: 0; font-size: 20px; color: #0f172a; }
+.resumo-modal { font-size: 18px; font-weight: bold; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+
+.btn-cancelar { background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-salvar { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+/* =========================================
+   BOTÃO DE IMPRIMIR EXTRATO
+   ========================================= */
+.btn-imprimir-extrato {
+    background-color: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn-imprimir-extrato:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btn-imprimir-extrato .material-symbols-outlined {
+    font-size: 18px;
+}

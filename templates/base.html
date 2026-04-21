@@ -1,0 +1,93 @@
+{% load static %}  <!-- Carrega os arquivos estáticos -->
+
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClickSub</title>
+    <link rel="stylesheet" href="{% static 'geral/css/base.css' %}">  <!-- Linka o arquivo CSS corretamente -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0"/>
+
+
+    {% block 'head' %}{% endblock 'head' %}
+</head>
+<header>
+    <aside class="barra-lateral" id="barra-lateral">
+
+        <a id="botao-fechar-barra-lateral" onclick="alternarBarraLateral()">
+            <span class="sidebar-btn">
+                <i class="material-symbols-outlined" id="icon-barra-lateral">chevron_left</i>
+            </span>
+        </a>
+
+        <div class="topo-barra-lateral">
+            <img src="{% static 'geral/img/logo.png' %}" alt="logo" id="logo-grande">
+            <img src="{% static 'geral/img/logo-pequena.png' %}" alt="logo" id="logo-pequena">
+        </div>
+        <nav id="menu-barra-lateral">
+
+            <a href="{% url 'homepage' %}">
+                <span class="itens-barra-lateral">
+                    <i class="material-symbols-outlined">home</i>
+                    <span class="texto-barra-lateral">Home</span>
+                </span>
+            </a>
+
+            <a href="{% url 'sales' %}">
+                <span class="itens-barra-lateral">
+                    <i class="material-symbols-outlined">storefront</i>
+                    <span class="texto-barra-lateral">Vendas</span>
+                </span>
+            </a>
+
+            <a href="{% url 'pagamentos' %}">
+                <span class="itens-barra-lateral">
+                    <i class="material-symbols-outlined">payments</i>
+                    <span class="texto-barra-lateral">Pagamento</span>
+                </span>
+            </a>
+            
+            <a href="{% url 'comissoes' %}">
+                <span class="itens-barra-lateral">
+                    <i class="material-symbols-outlined">handshake</i>
+                    <span class="texto-barra-lateral">Comissões</span>
+                </span class="itens-barra-lateral">
+            </a>
+
+            <a href="{% url 'caixa' %}">
+                <span class="itens-barra-lateral">
+                    <i class="material-symbols-outlined">account_balance_wallet</i>
+                    <span class="texto-barra-lateral">Caixa</span>
+                </span>
+            </a>
+
+            <a href="{% url 'logout' %}">
+                <span class="itens-barra-lateral" id="btn-sair">
+                    <i class="material-symbols-outlined">logout</i>
+                    <span class="texto-barra-lateral">Sair</span>
+                </span>
+            </a>
+
+
+        </nav>
+
+    </aside>
+
+
+
+</header>
+
+<body>    
+    <section class="conteudo-principal-aberto" id="conteudo-principal">
+        {% block 'body' %}{% endblock 'body' %}
+    </section>
+
+    <script src="{% static 'geral/js/base.js' %}"></script>
+
+    
+</body>
+</html>

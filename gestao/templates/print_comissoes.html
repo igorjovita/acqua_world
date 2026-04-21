@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Extrato de Conferência - {{ vendedor.nome }}</title>
+    <style>
+        /* CONFIGURAÇÃO DE IMPRESSÃO LIMPA */
+        @page { size: A4 portrait; margin: 0mm; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: #1a1a1a; 
+            margin: 0; 
+            padding: 1.5cm; 
+            line-height: 1.4;
+        }
+
+        /* CABEÇALHO */
+        .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 20pt; text-transform: uppercase; letter-spacing: 1px; }
+        .header p { margin: 5px 0 0 0; font-size: 11pt; color: #444; }
+
+        /* INFORMAÇÕES GERAIS */
+        .info-secao { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .info-bloco h3 { margin: 0 0 5px 0; font-size: 10pt; color: #666; text-transform: uppercase; }
+        .info-bloco p { margin: 0; font-size: 13pt; font-weight: bold; }
+
+        /* BARRA DISCRETA DE VALORES NETO */
+        .barra-neto {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 15px;
+            font-size: 9pt;
+            color: #475569;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            -webkit-print-color-adjust: exact;
+        }
+        .barra-neto strong { color: #0f172a; }
+
+        /* TABELA */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { 
+            background-color: #f2f2f2; 
+            border: 1px solid #ccc; 
+            padding: 10px 8px; 
+            font-size: 9pt; 
+            text-transform: uppercase; 
+            text-align: left;
+            -webkit-print-color-adjust: exact;
+        }
+        td { border: 1px solid #ccc; padding: 10px 8px; font-size: 10pt; }
+        .centro { text-align: center; }
+        .direita { text-align: right; }
+
+        /* ==============================================
+           QUADRO DE RESUMO (CENTRALIZADO E COM RESPIRO)
+           ============================================== */
+        .footer-acerto { 
+            display: flex; 
+            justify-content: center; /* Move do lado direito para o centro */
+            margin-top: 50px;        /* Espaço generoso entre a tabela e o quadro */
+        }
+        .quadro-resumo { 
+            width: 400px;            /* Um pouco mais largo para ficar elegante no centro */
+            border: 2px solid #000; 
+            padding: 20px;           /* Respiro interno maior */
+            background-color: #fdfdfd;
+            -webkit-print-color-adjust: exact;
+            border-radius: 4px;
+        }
+        .linha-total { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11pt; }
+        .linha-final { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 15px; 
+            padding-top: 15px; 
+            border-top: 2px solid #000; 
+            font-size: 13pt; 
+            font-weight: bold; 
+            align-items: center;
+        }
+
+        .status-pagar { background-color: #fff0f0; color: #b91c1c; padding: 6px 10px; border: 1px solid #b91c1c; border-radius: 3px; font-size: 11pt; }
+        .status-receber { background-color: #f0fdf4; color: #15803d; padding: 6px 10px; border: 1px solid #15803d; border-radius: 3px; font-size: 11pt;}
+        .status-zerado { background-color: #f8fafc; color: #475569; padding: 6px 10px; border: 1px solid #94a3b8; border-radius: 3px; font-size: 11pt;}
+
+       
+    </style>
+</head>
+<body onload="window.print()">
+
+
+    <div class="header">
+        <h1>Extrato de Conferência</h1>
+        <p>Acerto de contas de comissões e repasses operacionais</p>
+    </div>
+
+    <div class="info-secao">
+        <div class="info-bloco">
+            <h3>Vendedor / Comissário</h3>
+            <p>{{ vendedor.nome }}</p>
+        </div>
+        <div class="info-bloco" style="text-align: right;">
+            <h3>Período de Referência</h3>
+            <p>{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <div class="barra-neto">
+        <strong>Base Neto Acordada:</strong> &nbsp;
+        Batismo R$ {{ vendedor.neto_bat|floatformat:2 }} &nbsp;|&nbsp; 
+        Acompanhante R$ {{ vendedor.neto_acp|floatformat:2 }} &nbsp;|&nbsp; 
+        Turismo R$ {{ vendedor.neto_tur|floatformat:2 }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 12%;">Data</th>
+                <th style="width: 25%;">Clientes</th>
+                <th style="width: 15%;">Atividades</th>
+                <th style="width: 15%;" class="direita">Pago Acqua</th>
+                <th style="width: 15%;" class="direita">Pago Vend.</th>
+                <th style="width: 18%;" class="direita">Saldo Reserva</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in reservas %}
+            <tr>
+                <td class="centro">{{ res.data|date:"d/m/Y" }}</td>
+                <td style="font-weight: bold; color: #333;">{{ res.nome_exibicao }}</td>
+                <td style="font-size: 9pt;">{{ res.composicao }}</td>
+                <td class="direita">R$ {{ res.pago_acqua|floatformat:2 }}</td>
+                <td class="direita">R$ {{ res.pago_vend|floatformat:2 }}</td>
+                <td class="direita" style="font-weight: bold;">
+                    {% if res.saldo_reserva > 0 %}
+                        + R$ {{ res.saldo_reserva|floatformat:2 }}
+                    {% elif res.saldo_reserva < 0 %}
+                        - R$ {{ res.saldo_reserva_abs|floatformat:2 }}
+                    {% else %}
+                        R$ 0,00
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer-acerto">
+        <div class="quadro-resumo">
+            
+            <div class="linha-total" style="color: #64748b;">
+                <span>Vendedor a pagar (Repasses pendentes):</span>
+                <span>R$ {{ totais.vendedor_deve|floatformat:2 }}</span>
+            </div>
+            
+            <div class="linha-total" style="color: #64748b;">
+                <span>Acqua World a pagar (Comissões pendentes):</span>
+                <span>R$ {{ totais.acqua_deve|floatformat:2 }}</span>
+            </div>
+            
+            <div class="linha-final">
+                <span>RESULTADO:</span>
+                <span>
+                    {% if totais.saldo_geral > 0 %}
+                        <span class="status-pagar">VENDEDOR PAGA R$ {{ totais.saldo_geral|floatformat:2 }}</span>
+                    {% elif totais.saldo_geral < 0 %}
+                        <span class="status-receber">ACQUA PAGA R$ {{ totais.saldo_geral_abs|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="status-zerado">CONTAS QUITADAS</span>
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="margin-top: 50px; font-size: 9pt; color: #888; text-align: center; border-top: 1px dashed #ccc; padding-top: 10px;">
+        Gerado em {% now "d/m/Y H:i" %} pelo sistema Acqua World.
+    </div>
+
+</body>
+</html>

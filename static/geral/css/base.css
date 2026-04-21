@@ -1,0 +1,221 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --cor-primaria: #091521;
+    --cor-secundaria: #2D9CD7;
+    --cor-de-fundo: #F5F5F5;
+    --cor-de-texto: #FFFFFF;
+    --cor-de-texto-body: #333333;
+    --cor-hover: #1C7BB5;
+    --cor-de-borda: #E0E0E0;
+}
+
+
+
+.barra-lateral {
+    position: fixed;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    height: 100%;
+    padding: 10px 10px 30px 10px;
+    border: 1px solid #2f3336;
+    border-left: var(--cor-secundaria);
+    transition: all 0.4s linear;
+    background-color: var(--cor-primaria);
+}
+
+/* Div onde ficam as logos(logo grande e logo pequena) do topo da barra lateral */
+.topo-barra-lateral {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+/* Logo exibida com a barra lateral aberta */
+#logo-grande {
+    max-width: 200px;
+    transition: all 0.4s linear;
+    
+}
+
+/* Logo exibida com a barra lateral fechada */
+#logo-pequena {
+    max-width: 60px;
+    min-height: 60px;
+    object-fit: contain;
+    transition: all 0.4s linear;
+    display: none;
+
+
+}
+
+/* Botões dentro da barra lateral, nessa caso cada botão tem um i e um span dentro */
+aside a {
+    background: transparent;
+    border: 0;
+    color: var(--cor-de-texto);
+    cursor: pointer;
+    text-align: left;
+    height: 60px;
+    padding: 0;
+}
+
+/* Texto e icone dentro de cada botão da barra lateral */
+aside a span {
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    gap: 12px;
+    height: 48px;
+    padding: 0px 16px 0px 12px;
+    border-radius: 24px;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+
+
+
+aside a:hover > span {
+    background: var(--cor-hover);
+}
+
+
+/* Ícone dentro de cada botão na barra lateral */
+aside a i {
+    position: relative;
+    font-size: 24px;
+    transition: 0.2s;
+    color: var(--cor-secundaria);
+}
+
+/* Texto que fica ao lado do icone */
+
+/* ABERTO */
+
+.barra-lateral nav a span {
+    padding: 0px 16px 0px 12px;
+    transition: all 0.4s ease;
+    gap: 12px;
+}
+
+
+.barra-lateral nav a span span {
+    max-width: 200px;
+    opacity: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 0.4s ease, opacity 0.4s ease;
+}
+
+
+
+
+/* FECHADO */
+
+.barra-lateral-fechada nav a span {
+    padding: 0px 12px;
+    gap: 0;
+}
+
+.barra-lateral-fechada nav a span span {
+    max-width: 0;
+    opacity: 0;
+}
+
+
+
+
+#botao-fechar-barra-lateral {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;    
+}
+
+#icon-barra-lateral {
+    margin-left: auto;
+    cursor: pointer;
+}
+
+#menu-barra-lateral {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+
+/* Barra Lateral Fechada */
+
+.barra-lateral-fechada {
+    position: fixed;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: 80px;
+    height: 100%;
+    padding: 10px 10px 30px 10px;
+    border: 1px solid #2f3336;
+    transition: all 0.7s ease-in-out;
+    background-color: var(--cor-primaria);
+    overflow: hidden;
+
+}
+
+
+.barra-lateral-fechada .texto-barra-lateral {
+    display: none;
+}
+
+
+.barra-lateral-fechada #logo-grande {
+    display: none;
+}
+
+.barra-lateral-fechada #logo-pequena {
+    display: flex;
+    object-fit: contain;
+    transition: all 0.7s ease-in-out;
+}
+.barra-lateral-fechada .topo-barra-lateral {
+    width: 60px;
+    height: 60px;
+}
+
+
+
+
+
+
+
+/* Correção do posicionamento da div que armazena o conteudo principal */
+
+.conteudo-principal-aberto {
+    margin-left: calc(240px + 50px);
+    transition: all 0.7s ease-in-out;
+    margin-top: 70px;
+
+}
+
+.conteudo-principal-fechado {
+    margin-left: calc(80px + 50px);
+    transition: all 0.7s ease-in-out;
+    margin-top: 70px;
+
+}
+#btn-sair {
+    margin-top: 40px;
+}
+
+
+
+
+
+
