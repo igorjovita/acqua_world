@@ -109,7 +109,7 @@ def sales(request):
         elif tipo_formulario == 'form-vendedor':
             Vendedor.objects.create(
                 nome=request.POST.get('nome_vendedor'),
-                neto_bat=Decimal(request.POST.get('neto_bat', '210').replace(',', '.')),
+                neto_bat=Decimal(request.POST.get('neto_bat', '200').replace(',', '.')),
                 neto_acp=Decimal(request.POST.get('neto_acp', '80').replace(',', '.')),
                 neto_turismo_1=Decimal(request.POST.get('neto_turismo_1', '330').replace(',', '.')),
                 neto_turismo_2=Decimal(request.POST.get('neto_turismo_2', '380').replace(',', '.')),

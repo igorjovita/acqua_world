@@ -18,7 +18,7 @@ class Vendedor(models.Model):
     """Refere-se aos 'Comissários' das planilhas (ex: Temporada Hostel, Don Juan)"""
     nome = models.CharField(max_length=100)
     # Valores líquidos acordados com cada vendedor/parceiro
-    neto_bat = models.DecimalField(max_digits=10, decimal_places=2, default=210.00)
+    neto_bat = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
     neto_acp = models.DecimalField(max_digits=10, decimal_places=2, default=80.00)
     neto_turismo_1 = models.DecimalField(max_digits=10, decimal_places=2, default=330.00)
     neto_turismo_2 = models.DecimalField(max_digits=10, decimal_places=2, default=380.00)
