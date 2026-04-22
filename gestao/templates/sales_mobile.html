@@ -126,11 +126,15 @@
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
                 <div class="field-group" style="background:#f1f5f9;">
                     <label>Neto BAT</label>
-                    <input type="number" step="0.01" name="neto_bat" value="0">
+                    <input type="number" step="0.01" name="neto_bat" value="200.00">
                 </div>
                 <div class="field-group" style="background:#f1f5f9;">
                     <label>Neto ACP</label>
-                    <input type="number" step="0.01" name="neto_acp" value="0">
+                    <input type="number" step="0.01" name="neto_acp" value="80.00">
+                </div>
+                <div class="field-group" style="background:#f1f5f9;">
+                    <label>Neto TUR</label>
+                    <input type="number" step="0.01" name="neto_tur" value="380.00">
                 </div>
             </div>
 
@@ -166,21 +170,21 @@
             <div style="display: flex; gap: 10px;">
                 <div class="field-group" style="flex: 1;">
                     <label>Telefone</label>
-                    <input type="tel" name="telefone" value="${dados ? dados.telefone : ''}" placeholder="(22) 99999-9999">
+                    <input type="tel" name="telefone" value="${dados ? dados.telefone : ''}" >
                 </div>
                 <div class="field-group" style="flex: 1;">
                     <label>CPF / Documento</label>
-                    <input type="text" name="documento" value="${dados ? dados.documento : ''}" placeholder="Opcional">
+                    <input type="text" name="documento" value="${dados ? dados.documento : ''}" >
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
                 <div class="field-group" style="flex: 1;">
                     <label>Altura (m)</label>
-                    <input type="number" step="0.01" name="altura" value="${dados ? dados.altura : ''}" placeholder="Ex: 1.75">
+                    <input type="number" step="0.01" name="altura" value="${dados ? dados.altura : ''}" >
                 </div>
                 <div class="field-group" style="flex: 1;">
                     <label>Peso (kg)</label>
-                    <input type="number" step="0.1" name="peso" value="${dados ? dados.peso : ''}" placeholder="Ex: 80">
+                    <input type="number" step="0.1" name="peso" value="${dados ? dados.peso : ''}" >
                 </div>
             </div>
 
