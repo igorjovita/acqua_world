@@ -18,9 +18,14 @@ class Vendedor(models.Model):
     """Refere-se aos 'Comissários' das planilhas (ex: Temporada Hostel, Don Juan)"""
     nome = models.CharField(max_length=100)
     # Valores líquidos acordados com cada vendedor/parceiro
-    neto_bat = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Neto Batismo (BAT)")
-    neto_acp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Neto Acompanhante (ACP)")
-    neto_tur = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Neto Turismo (TUR)")
+    neto_bat = models.DecimalField(max_digits=10, decimal_places=2, default=210.00)
+    neto_acp = models.DecimalField(max_digits=10, decimal_places=2, default=80.00)
+    neto_turismo_1 = models.DecimalField(max_digits=10, decimal_places=2, default=330.00)
+    neto_turismo_2 = models.DecimalField(max_digits=10, decimal_places=2, default=380.00)
+    neto_scuba = models.DecimalField(max_digits=10, decimal_places=2, default=480.00)
+
+    # Porcentagem fixa para cursos (ex: OWD, ADV) - pode ser ajustada conforme necessidade
+    neto_curso = models.DecimalField(max_digits=5, decimal_places=2, default=10.00)
 
     def __str__(self):
         return self.nome
@@ -40,9 +45,18 @@ class Funcionario(models.Model):
         return f"{self.nome} ({self.get_funcao_display()})"
 
 class Atividade(models.Model):
+    CATEGORIAS = [
+        ('BATISMO', 'Batismo'),
+        ('ACOMPANHANTE', 'Acompanhante'),
+        ('TURISMO_1', 'Turismo 1 Queda'),
+        ('TURISMO_2', 'Turismo 2 Quedas'),
+        ('SCUBA_REVIEW', 'Scuba Review'),
+        ('CURSO', 'Curso'),
+    ]
     nome = models.CharField(max_length=100)
     apelido = models.CharField(max_length=15, help_text="Ex: BAT, TUR1, OWD, ACP")
     valor_padrao = models.DecimalField(max_digits=10, decimal_places=2)
+    categoria_comissao = models.CharField(max_length=20, choices=CATEGORIAS)
 
     def __str__(self):
         return self.apelido
@@ -88,16 +102,31 @@ class ClienteReserva(models.Model):
     # 1. Pega o valor Neto correto dependendo da atividade (Ex: Batismo, Turismo)
     @property
     def neto_atividade(self):
+        """
+        Retorna quanto a ACQUA deve receber livre (após comissão).
+        """
         if not self.atividade or not self.reserva.vendedor:
             return Decimal('0.00')
             
-        sigla = self.atividade.apelido.upper()
         vendedor = self.reserva.vendedor
+        categoria = self.atividade.categoria_comissao # Usando a categoria que criamos
         
-        if sigla == 'BAT': return vendedor.neto_bat
-        elif sigla == 'ACP': return vendedor.neto_acp
-        elif sigla == 'TUR': return vendedor.neto_tur
-        return Decimal('0.00')
+        if categoria == 'BATISMO':
+            return vendedor.neto_batismo
+        elif categoria == 'ACOMPANHANTE':
+            return vendedor.neto_acp
+        elif categoria == 'TURISMO_1':
+            return vendedor.neto_turismo_1
+        elif categoria == 'TURISMO_2':
+            return vendedor.neto_turismo_2
+        elif categoria == 'SCUBA_REVIEW':
+            return vendedor.neto_scuba
+        elif categoria == 'CURSO':
+            # No curso, o neto é: Valor Cobrado - (Valor Cobrado * %)
+            comissao = self.valor_cobrado * (vendedor.neto_curso / Decimal('100.00'))
+            return self.valor_cobrado - comissao
+            
+        return self.valor_cobrado # Caso não tenha categoria, o neto é o valor total
 
     # 2. Soma tudo que caiu no Caixa da Loja para este cliente
     @property
@@ -114,46 +143,33 @@ class ClienteReserva(models.Model):
     # 4. A MÁGICA: O Status que processa a regra de negócio completa
     @property
     def status_financeiro(self):
-        # Passo A: Verifica se o cliente ainda deve o passeio
-        pago_pelo_cliente = self.recebido_loja + self.retido_vendedor
-        saldo_cliente = self.valor_cobrado - pago_pelo_cliente
+        # 1. Verifica se o cliente pagou tudo (independente de com quem está o dinheiro)
+        pago_total = self.recebido_loja + self.retido_vendedor
+        if pago_total < self.valor_cobrado:
+            deve = self.valor_cobrado - pago_total
+            return f"CLIENTE DEVE: R$ {deve:.2f}"
 
-        if saldo_cliente > 0:
-            return f"CLIENTE DEVE: R$ {saldo_cliente:.2f}"
-
-        # Passo B: Se o acerto já foi dado como liquidado/transferido no sistema
         if self.acerto_liquidado:
             return "PAGO (FINALIZADO)"
 
-        # Passo C: Encontro de Contas (Acqua vs Vendedor)
-        # O objetivo da Acqua é ficar exatamente com o valor do NETO.
+        # 2. Encontro de contas (Acqua vs Vendedor)
+        # O objetivo da Acqua é ter o valor NETO na mão.
         saldo_acerto = self.neto_atividade - self.recebido_loja
 
         if saldo_acerto > 0:
             return f"RECEBER DO VENDEDOR: R$ {saldo_acerto:.2f}"
         elif saldo_acerto < 0:
             return f"PAGAR COMISSÃO: R$ {abs(saldo_acerto):.2f}"
-        else:
-            return "PAGO (FINALIZADO)" # Deu zero redondo (cada um com sua parte)
+        
+        return "PAGO (FINALIZADO)"
 
     def save(self, *args, **kwargs):
-        # Lógica para calcular a comissão automaticamente baseada no Vendedor e na Atividade
+        """
+        Calcula e persiste a comissão no banco de dados toda vez que salvar.
+        """
         if self.reserva and self.atividade:
-            vendedor = self.reserva.vendedor
-            sigla = self.atividade.apelido.upper()
-            
-            # Define qual valor 'neto' usar
-            if 'BAT' in sigla:
-                neto = vendedor.neto_bat
-            elif 'ACP' in sigla:
-                neto = vendedor.neto_acp
-            elif 'TUR' in sigla:
-                neto = vendedor.neto_tur
-            else:
-                neto = self.valor_cobrado # Se não for comissionado, não gera comissão
-                
-            # Comissão = Valor Cobrado do Cliente - Valor Neto (que fica para a loja)
-            self.comissao_calculada = self.valor_cobrado - neto
+            # A comissão é sempre a diferença entre o que o cliente pagou e o que a loja exige (Neto)
+            self.comissao_calculada = self.valor_cobrado - self.neto_atividade
             
         super().save(*args, **kwargs)
 

@@ -93,54 +93,53 @@ def homepage(request):
 
 def sales(request):
     if request.method == "POST":
-
-        # ==========================================
-        # 1. INTERCEPTA OS MODAIS DE CADASTRO RÁPIDO
-        # ==========================================
         tipo_formulario = request.POST.get('form')
         
+        # 1. CADASTRO RÁPIDO DE ATIVIDADE
         if tipo_formulario == 'form-atividade':
             Atividade.objects.create(
                 nome=request.POST.get('nome_atividade'),
                 apelido=request.POST.get('apelido_atividade'),
-                valor_padrao=Decimal(request.POST.get('valor_atividade').replace(',', '.'))
+                valor_padrao=Decimal(request.POST.get('valor_atividade').replace(',', '.')),
+                categoria_comissao=request.POST.get('categoria_comissao') # Novo campo
             )
-            return redirect('sales') # Recarrega a tela com a atividade nova na lista
+            return redirect('sales')
             
+        # 2. CADASTRO RÁPIDO DE VENDEDOR (Com os novos Netos e Cursos)
         elif tipo_formulario == 'form-vendedor':
             Vendedor.objects.create(
                 nome=request.POST.get('nome_vendedor'),
-                neto_bat=Decimal(request.POST.get('neto_bat', '0').replace(',', '.')),
-                neto_acp=Decimal(request.POST.get('neto_acp', '0').replace(',', '.')),
-                neto_tur=Decimal(request.POST.get('neto_tur', '0').replace(',', '.'))
+                neto_batismo=Decimal(request.POST.get('neto_batismo', '210').replace(',', '.')),
+                neto_acp=Decimal(request.POST.get('neto_acp', '80').replace(',', '.')),
+                neto_turismo_1=Decimal(request.POST.get('neto_turismo_1', '330').replace(',', '.')),
+                neto_turismo_2=Decimal(request.POST.get('neto_turismo_2', '380').replace(',', '.')),
+                neto_scuba=Decimal(request.POST.get('neto_scuba', '480').replace(',', '.')),
+                neto_curso=Decimal(request.POST.get('neto_curso', '10').replace(',', '.'))
             )
             return redirect('sales')
         
+        # 3. PROCESSAMENTO DA RESERVA
         reserva_id_edicao = request.POST.get('reserva_id_edicao')
-        
-        # 1. CRIA OU ATUALIZA A RESERVA "MÃE"
+        vendedor_id = request.POST.get('vendedor')
+        vendedor = Vendedor.objects.get(id=vendedor_id) if vendedor_id else None
+        data_reserva = request.POST.get('data')
+
         if reserva_id_edicao:
             reserva = Reserva.objects.get(id=reserva_id_edicao)
-            reserva.data = request.POST.get('data')
-            vendedor_id = request.POST.get('vendedor')
-            reserva.vendedor = Vendedor.objects.get(id=vendedor_id) if vendedor_id else None
+            reserva.data = data_reserva
+            reserva.vendedor = vendedor
             reserva.save()
         else:
-            vendedor_id = request.POST.get('vendedor')
-            vendedor = Vendedor.objects.get(id=vendedor_id) if vendedor_id else None
-            reserva = Reserva.objects.create(
-                data=request.POST.get('data'),
-                vendedor=vendedor,
-            )
+            reserva = Reserva.objects.create(data=data_reserva, vendedor=vendedor)
 
-        # 2. LISTAS CAPTURADAS DO HTML
-        cr_ids = request.POST.getlist("cr_id") # IDs de quem já existia
+        # Captura listas do formulário
+        cr_ids = request.POST.getlist("cr_id")
         nomes = request.POST.getlist("nome")
         telefones = request.POST.getlist("telefone")
         documentos = request.POST.getlist("documento")
         pesos = request.POST.getlist("peso")
         alturas = request.POST.getlist("altura")
-        atividades = request.POST.getlist("atividade")
+        atividades_ids = request.POST.getlist("atividade")
         valores = request.POST.getlist("valor")
         
         tem_sinais = request.POST.getlist("tem_sinal")
@@ -148,151 +147,131 @@ def sales(request):
         formas_pg_sinal = request.POST.getlist("forma_pg_sinal")
         recebedores_sinal = request.POST.getlist("recebedor_sinal")
 
-        # Se for edição, guarda os IDs que vieram no formulário
-        ids_recebidos = [int(id) for id in cr_ids if id.strip()]
-        
-        # Se for edição, apaga os mergulhadores que foram "removidos" na tela
+        # Gestão de remoção na edição
         if reserva_id_edicao:
+            ids_recebidos = [int(i) for i in cr_ids if i.strip()]
             reserva.passageiros.exclude(id__in=ids_recebidos).delete()
 
-        # 3. SALVA OS MERGULHADORES UM POR UM
+        # 4. LOOP DE SALVAMENTO DOS PASSAGEIROS
         for i in range(len(nomes)):
-            # Geramos um identificador único para novos clientes sem documento
-            # Usamos o timestamp ou o ID da iteração para evitar colisão
-            doc_final = documentos[i].strip() if (i < len(documentos) and documentos[i]) else f"TEMP_{reserva.id}_{i}"
+            if not nomes[i].strip(): continue
+
+            # Documento ou temporário
+            doc_final = documentos[i].strip() if (i < len(documentos) and documentos[i].strip()) else f"TEMP_{reserva.id}_{i}"
             
-            # 1. Buscamos ou criamos o Cliente baseado no documento
-            cliente, criado = Cliente.objects.get_or_create(
+            cliente, _ = Cliente.objects.get_or_create(
                 documento=doc_final,
-                defaults={
-                    'nome': nomes[i],
-                    'telefone': telefones[i] if i < len(telefones) else "",
-                    'peso': pesos[i] if (i < len(pesos) and pesos[i]) else None,
-                    'altura': alturas[i] if (i < len(alturas) and alturas[i]) else None
-                }
+                defaults={'nome': nomes[i]}
             )
+            # Atualiza dados do cliente sempre
+            cliente.nome = nomes[i]
+            if i < len(telefones): cliente.telefone = telefones[i]
+            if i < len(pesos) and pesos[i]: cliente.peso = Decimal(pesos[i].replace(',', '.'))
+            if i < len(alturas) and alturas[i]: cliente.altura = Decimal(alturas[i].replace(',', '.'))
+            cliente.save()
 
-            # 2. SE NÃO FOI CRIADO AGORA, ATUALIZAMOS (Crucial para correções de nomes e TEMP)
-            if not criado:
-                cliente.nome = nomes[i]
-                if i < len(telefones) and telefones[i]: cliente.telefone = telefones[i]
-                if i < len(pesos) and pesos[i]: cliente.peso = pesos[i]
-                if i < len(alturas) and alturas[i]: cliente.altura = alturas[i]
-                cliente.save()
+            atividade = Atividade.objects.get(id=atividades_ids[i]) if atividades_ids[i] else None
+            valor_c = Decimal(valores[i].replace(',', '.')) if valores[i] else Decimal('0.00')
 
-            atividade = Atividade.objects.get(id=atividades[i]) if (i < len(atividades) and atividades[i]) else None
-            valor_cobrado = Decimal(valores[i]) if (i < len(valores) and valores[i]) else Decimal('0.00')
-
-            # 3. VINCULAMOS O CLIENTE À RESERVA (ClienteReserva)
-            # Pegamos o ID do ClienteReserva (se existir) para saber se estamos editando uma linha ou criando nova
             cr_id_atual = cr_ids[i] if i < len(cr_ids) else ""
             
             if cr_id_atual.strip():
-                # Atualização de linha existente
                 cr = ClienteReserva.objects.get(id=int(cr_id_atual))
                 cr.cliente = cliente
                 cr.atividade = atividade
-                cr.valor_cobrado = valor_cobrado
-                cr.save()
-                # Limpa pagamentos de sinal apenas se for necessário recriar
-                # (Opcional: você pode manter se não quiser deletar o histórico de sinal na edição)
-                cr.pagamentos.filter(descricao="Sinal/Adiantamento").delete()
+                cr.valor_cobrado = valor_c
+                cr.save() # Aqui o model calcula a comissão sozinho!
             else:
-                # Criação de nova linha de passageiro
                 cr = ClienteReserva.objects.create(
                     reserva=reserva,
                     cliente=cliente,
                     atividade=atividade,
-                    valor_cobrado=valor_cobrado
-                )
+                    valor_cobrado=valor_c
+                ) # O create também dispara o save() do model
 
-            # Salva o Sinal, se houver
+            # 5. PAGAMENTOS (SINAL)
+            # Limpa sinais antigos se for edição para evitar duplicidade ao re-salvar
+            cr.pagamentos.filter(descricao="Sinal/Adiantamento").delete()
+
             if i < len(tem_sinais) and tem_sinais[i] == "sim":
-                valor_s = Decimal(valores_sinal[i]) if valores_sinal[i] else Decimal('0.00')
-                if valor_s > 0:
+                v_sinal = Decimal(valores_sinal[i].replace(',', '.')) if valores_sinal[i] else Decimal('0.00')
+                if v_sinal > 0:
                     p = Pagamento.objects.create(
                         cliente_reserva=cr,
-                        valor=valor_s,
+                        valor=v_sinal,
                         forma_pg=formas_pg_sinal[i],
                         recebedor=recebedores_sinal[i],
                         descricao="Sinal/Adiantamento"
                     )
+                    # Se caiu na LOJA, vai para o Livro Caixa
                     if recebedores_sinal[i] == 'LOJA':
                         Caixa.objects.create(
-                            data=timezone.localtime(timezone.now()).date(),
+                            data=reserva.data,
                             tipo='ENTRADA',
-                            descricao=f"SINAL: {nomes[i]}".upper(),
+                            descricao=f"SINAL: {cliente.nome} ({atividade.apelido})".upper(),
                             forma_pg=formas_pg_sinal[i],
-                            valor=valor_s,
-                            pagamento_origem=p # Link direto para auditoria
+                            valor=v_sinal,
+                            pagamento_origem=p
                         )
 
         return redirect('homepage')
 
     # ==========================================
-    # CARREGAR FORMULÁRIO E DADOS DE EDIÇÃO (GET)
+    # LÓGICA DO GET (CARREGAMENTO DA TELA)
     # ==========================================
-    dados_edicao_json = "null"
     edit_id = request.GET.get('edit')
+    dados_edicao_json = "null"
     
     if edit_id:
         try:
-            reserva = Reserva.objects.get(id=edit_id)
-            passageiros = reserva.passageiros.all()
-            
+            res = Reserva.objects.get(id=edit_id)
             clientes_data = []
-            for cr in passageiros:
-                pgs = cr.pagamentos.all()
-                tem_sinal = "sim" if pgs.exists() else "nao"
-                valor_sinal = sum(p.valor for p in pgs) if pgs else ""
-                forma_pg = pgs[0].forma_pg if pgs else ""
-                recebedor = pgs[0].recebedor if pgs else ""
-
+            for cr in res.passageiros.all():
+                # Busca sinal se existir
+                sinal_pg = cr.pagamentos.filter(descricao="Sinal/Adiantamento").first()
                 clientes_data.append({
                     'cr_id': cr.id,
                     'nome': cr.cliente.nome,
                     'telefone': cr.cliente.telefone or "",
-                    'documento': cr.cliente.documento or "",
+                    'documento': cr.cliente.documento if "TEMP_" not in cr.cliente.documento else "",
                     'peso': float(cr.cliente.peso) if cr.cliente.peso else "",
                     'altura': float(cr.cliente.altura) if cr.cliente.altura else "",
                     'atividade': cr.atividade.id if cr.atividade else "",
                     'valor': float(cr.valor_cobrado),
-                    'tem_sinal': tem_sinal,
-                    'valor_sinal': float(valor_sinal) if valor_sinal else "",
-                    'forma_pg_sinal': forma_pg,
-                    'recebedor_sinal': recebedor
+                    'tem_sinal': "sim" if sinal_pg else "nao",
+                    'valor_sinal': float(sinal_pg.valor) if sinal_pg else "",
+                    'forma_pg_sinal': sinal_pg.forma_pg if sinal_pg else "PIX",
+                    'recebedor_sinal': sinal_pg.recebedor if sinal_pg else "LOJA",
                 })
             
-            dados_edicao = {
-                'reserva_id': reserva.id,
-                'data': str(reserva.data),
-                'vendedor': reserva.vendedor.id if reserva.vendedor else "",
-                'quantidade': passageiros.count(),
+            dados_edicao_json = json.dumps({
+                'reserva_id': res.id,
+                'data': str(res.data),
+                'vendedor': res.vendedor.id if res.vendedor else "",
                 'clientes': clientes_data
-            }
-            dados_edicao_json = json.dumps(dados_edicao)
+            })
         except Reserva.DoesNotExist:
             pass
 
-    # AQUI ESTÁ A CORREÇÃO DO ERRO DO JS: Preparar as atividades em JSON seguro
-    atividades_list = list(Atividade.objects.all())
-    atividades_json_data = [
+    # Prepara as atividades para o JS (Preenchimento automático de preços)
+    atividades_list = [
         {'id': a.id, 'apelido': a.apelido, 'valor_padrao': float(a.valor_padrao)} 
-        for a in atividades_list
+        for a in Atividade.objects.all()
     ]
-    # Detecção de Mobile
-    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-    is_mobile = any(device in user_agent for device in ['iphone', 'android', 'mobile'])
+
+    # Detecção simples de Mobile
+    ua = request.META.get('HTTP_USER_AGENT', '').lower()
+    is_mobile = any(x in ua for x in ['iphone', 'android', 'mobile'])
 
     context = {
         'vendedores': Vendedor.objects.all().order_by('nome'),
-        'atividades': atividades_list, # Para os formulários rápidos no topo da página
-        'atividades_json': json.dumps(atividades_json_data), # Para o JavaScript usar
+        'atividades': Atividade.objects.all(),
+        'atividades_json': json.dumps(atividades_list),
         'dados_edicao_json': dados_edicao_json 
     }
-    if is_mobile:
-        return render(request, 'sales_mobile.html', context)
-    return render(request, 'sales.html', context)
+    
+    template = 'sales_mobile.html' if is_mobile else 'sales.html'
+    return render(request, template, context)
 
 def print_planilha(request):
     operacoes = ClienteReserva.objects.select_related('cliente', 'reserva', 'reserva__vendedor', 'atividade', 'dm_responsavel').all().order_by('cliente__nome')
