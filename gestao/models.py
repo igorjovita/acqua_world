@@ -112,7 +112,7 @@ class ClienteReserva(models.Model):
         categoria = self.atividade.categoria_comissao # Usando a categoria que criamos
         
         if categoria == 'BATISMO':
-            return vendedor.neto_batismo
+            return vendedor.neto_bat
         elif categoria == 'ACOMPANHANTE':
             return vendedor.neto_acp
         elif categoria == 'TURISMO_1':
