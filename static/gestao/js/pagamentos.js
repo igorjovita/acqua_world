@@ -5,22 +5,50 @@ function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor, historicoJ
     document.getElementById('modal-titulo-reserva').innerText = "Reserva: " + nome;
     document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + vendedor;
     
+    // 1. Lida com o Histórico
     const textoHistorico = historicoJson ? historicoJson : '[]';
     historicoGlobal = JSON.parse(textoHistorico);
     
-    // Renderiza a lista de check-in (passageiros)
+    // 2. Lida com os Passageiros e renderiza a tabela de checkout
     const passageiros = JSON.parse(passageirosJson);
     renderizarTabelaPassageiros(passageiros);
     
-    // Limpa e prepara a aba de histórico
+    // 3. Renderiza a tabela do histórico
     renderizarHistorico();
     
-    // Reset para a aba de checkout ao abrir
+    // 4. Define a aba padrão ao abrir
     alternarAba('checkout');
     
+    // 5. Mostra o modal
     document.getElementById('modal-acerto').style.display = 'flex';
 }
 
+function renderizarTabelaPassageiros(passageiros) {
+    const tbody = document.getElementById('lista-passageiros-checkin');
+    tbody.innerHTML = '';
+
+    passageiros.forEach(p => {
+        // Criar linha da tabela para cada passageiro
+        const row = `
+            <tr>
+                <td><input type="checkbox" name="ids_passageiros" value="${p.id_cr}" data-saldo="${p.saldo}" onchange="recalcularTotalCheckin()"></td>
+                <td>${p.nome}</td>
+                <td>${p.atividade || 'N/A'}</td>
+                <td>R$ ${p.valor_cobrado.toFixed(2)}</td>
+                <td>R$ ${p.pago.toFixed(2)}</td>
+                <td style="font-weight: bold; color: #ef4444;">R$ ${p.saldo.toFixed(2)}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+
+    // Zera o input de valor a receber
+    document.getElementById('input-valor-final').value = "0.00";
+    
+    // Desmarca o checkbox "Selecionar Todos" por precaução
+    const checkAll = document.getElementById('check-all-passageiros');
+    if(checkAll) checkAll.checked = false;
+}
 
 function renderizarHistorico() {
     const tbody = document.getElementById('lista-historico-pagamentos');
@@ -35,10 +63,10 @@ function renderizarHistorico() {
         const row = `
             <tr>
                 <td>${pg.data || 'N/A'}</td>
-                <td>${pg.passageiro}</td>
+                <td>${pg.passageiro || 'Grupo'}</td>
                 <td style="font-weight: 600;">R$ ${pg.valor.toFixed(2)}</td>
                 <td><span class="badge-mini">${pg.pagador || 'CLIENTE'}</span></td>
-                <td><span class="badge-mini">${pg.recebedor}</span></td>
+                <td><span class="badge-mini">${pg.recebedor || 'N/A'}</span></td>
             </tr>
         `;
         tbody.innerHTML += row;
@@ -61,7 +89,8 @@ function alternarAba(aba) {
         historico.style.display = 'block';
         btnCheckout.classList.remove('active');
         btnHistorico.classList.add('active');
-        renderizarHistorico();
+        // Recarrega o histórico caso tenha mudado
+        renderizarHistorico(); 
     }
 }
 
@@ -71,6 +100,7 @@ function recalcularTotalCheckin() {
     checks.forEach(c => {
         total += parseFloat(c.getAttribute('data-saldo'));
     });
+    // Atualiza o input que a atendente pode editar
     document.getElementById('input-valor-final').value = total.toFixed(2);
 }
 
@@ -79,27 +109,10 @@ function selecionarTodosPassageiros(source) {
     for (let i = 0; i < checkboxes.length; i++) {
         checkboxes[i].checked = source.checked;
     }
+    // Após selecionar/deselecionar, recalcula o total
     recalcularTotalCheckin();
 }
 
-
 function fecharModalAcerto() {
     document.getElementById('modal-acerto').style.display = 'none';
-}
-
-function alternarModoPagamento() {
-    const modo = document.getElementById('tipo_acerto').value;
-    const blocoGrupo = document.getElementById('bloco-pg-grupo');
-    const blocoInd = document.getElementById('bloco-pg-individual');
-    const selectGrupo = document.getElementById('select-forma-grupo');
-    
-    if (modo === 'grupo') {
-        blocoGrupo.style.display = 'block';
-        blocoInd.style.display = 'none';
-        selectGrupo.required = true;
-    } else {
-        blocoGrupo.style.display = 'none';
-        blocoInd.style.display = 'block';
-        selectGrupo.required = false;
-    }
 }
