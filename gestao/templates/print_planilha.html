@@ -65,9 +65,9 @@
                     {% if op %}
                         <td 
                             {% if op.status_checkin == 'LOJA' %}
-                                style="background-color: #bfdbfe !important; font-weight: bold;"
+                                style="background-color: #bfdbfe !important;"
                             {% elif op.status_checkin == 'PIER' %}
-                                style="background-color: #fef08a !important; font-weight: bold;"
+                                style="background-color: #fef08a !important;"
                             {% endif %}
                         >
                             {{ op.cliente.nome }}

@@ -131,6 +131,7 @@ def sales(request):
                     'altura': float(cr.cliente.altura) if cr.cliente.altura else "",
                     'atividade': cr.atividade.id if cr.atividade else "",
                     'valor': float(cr.valor_cobrado),
+                    'status_checkin': cr.status_checkin or 'LOJA',
                     'tem_sinal': "sim" if sinal_pg else "nao",
                     'valor_sinal': float(sinal_pg.valor) if sinal_pg else "",
                     'forma_pg_sinal': sinal_pg.forma_pg if sinal_pg else "PIX",

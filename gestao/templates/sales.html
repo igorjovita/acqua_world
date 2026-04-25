@@ -20,8 +20,9 @@
         </div>
     </div>
 
-    <form action="" class="formulario" method="POST" id="form-venda">
+    <form action="{% url 'sales' %}" class="formulario" method="POST" id="form-venda">
         {% csrf_token %}
+        <input type="hidden" name="reserva_id_edicao" id="reserva-id-edicao" value="">
         
         <div class="card-container" style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
             <h2 class="section-title" style="border-bottom: none; margin-bottom: 15px;">Dados da Saída</h2>
@@ -56,7 +57,7 @@
         </div>
 
         <div class="form-actions" id="form-actions" style="display: none;">
-            <button type="submit" name="form" value="form-reserva" class="btn-submit-venda">Salvar Reserva</button>
+            <button type="submit" class="btn-submit-venda">Salvar Reserva</button>
         </div>
     </form>
 
@@ -65,39 +66,10 @@
             <form method="POST" action="{% url 'cadastrar_vendedor' %}">
                 {% csrf_token %}
                 <h2 class="titulo-modal">Cadastrar Vendedor</h2>
-                
                 <div class="field-group" style="background:#f1f5f9; margin-bottom:15px;">
                     <label>Nome do Vendedor</label>
                     <input type="text" name="nome_vendedor" class="modern-input" required>
                 </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div class="field-group" style="background:#f1f5f9;">
-                        <label>Neto Batismo</label>
-                        <input type="number" step="0.01" name="neto_bat" value="200.00" class="modern-input">
-                    </div>
-                    <div class="field-group" style="background:#f1f5f9;">
-                        <label>Neto Acomp.</label>
-                        <input type="number" step="0.01" name="neto_acp" value="80.00" class="modern-input">
-                    </div>
-                    <div class="field-group">
-                        <label>Neto Tur 1 Queda</label>
-                        <input type="number" step="0.01" name="neto_turismo_1" value="330.00" class="modern-input">
-                    </div>
-                    <div class="field-group">
-                        <label>Neto Tur 2 Quedas</label>
-                        <input type="number" step="0.01" name="neto_turismo_2" value="380.00" class="modern-input">
-                    </div>
-                    <div class="field-group" style="background:#f1f5f9;">
-                        <label>Neto Scuba Review</label>
-                        <input type="number" step="0.01" name="neto_scuba" value="480.00" class="modern-input">
-                    </div>
-                    <div class="field-group" style="background:#f1f5f9; margin-top:10px;">
-                        <label>% Comissão Cursos</label>
-                        <input type="number" step="0.01" name="neto_curso" value="10.00" class="modern-input">
-                    </div>
-                </div>
-                
                 <div class="div-btn">
                     <button type="button" class="btn-cancelar" onclick="fecharModal('modal-vendedor')">Cancelar</button>
                     <button type="submit" name="form" value="form-vendedor" class="btn-salvar">Cadastrar</button>
@@ -111,22 +83,6 @@
             <form method="POST" action="{% url 'cadastrar_atividade' %}">
                 {% csrf_token %}
                 <h2 class="titulo-modal">Cadastrar Atividade</h2>
-                
-                <div class="div-inputs-modal">
-                    <label>Nome da Atividade</label>
-                    <input type="text" name="nome_atividade" class="modern-input" placeholder="Ex: Batismo" required>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <div class="div-inputs-modal" style="flex: 1;">
-                        <label>Apelido (Sigla)</label>
-                        <input type="text" name="apelido_atividade" class="modern-input" placeholder="Ex: BAT" required>
-                    </div>
-                    <div class="div-inputs-modal" style="flex: 1;">
-                        <label>Valor Padrão (R$)</label>
-                        <input type="number" step="0.01" name="valor_atividade" class="modern-input" required>
-                    </div>
-                </div>
-                
                 <div class="div-btn">
                     <button type="button" class="btn-cancelar" onclick="fecharModal('modal-atividade')">Cancelar</button>
                     <button type="submit" name="form" value="form-atividade" class="btn-salvar">Cadastrar</button>
@@ -136,13 +92,8 @@
     </div>
 
     <script type="application/json" id="atividades-data">{{ atividades_json|safe }}</script>
-    
     <script>
         const DADOS_EDICAO = {{ dados_edicao_json|safe }};
     </script>
-
-    <form method="POST" action="{% url 'sales' %}">
-        {% csrf_token %}
-        <input type="hidden" name="reserva_id_edicao" id="reserva-id-edicao" value="">
     <script src="{% static 'sales/js/sales.js' %}"></script>
 {% endblock 'body' %}

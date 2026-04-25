@@ -33,6 +33,8 @@ def processar_salvamento_reserva(dados_post):
     alturas = dados_post.getlist("altura")
     atividades_ids = dados_post.getlist("atividade")
     valores = dados_post.getlist("valor")
+
+    status_checkins = dados_post.getlist("status_checkin")
     
     tem_sinais = dados_post.getlist("tem_sinal")
     valores_sinal = dados_post.getlist("valor_sinal")
@@ -68,6 +70,7 @@ def processar_salvamento_reserva(dados_post):
         valor_c = Decimal(valores[i].replace(',', '.')) if valores[i] else Decimal('0.00')
 
         cr_id_atual = cr_ids[i] if i < len(cr_ids) else ""
+        status_c = status_checkins[i] if i < len(status_checkins) else ""
         
         # Cria ou Atualiza o ClienteReserva
         if cr_id_atual.strip():
@@ -75,13 +78,15 @@ def processar_salvamento_reserva(dados_post):
             cr.cliente = cliente
             cr.atividade = atividade
             cr.valor_cobrado = valor_c
+            cr.status_checkin = status_c
             cr.save() # A comissão já é calculada automaticamente lá no models.py!
         else:
             cr = ClienteReserva.objects.create(
                 reserva=reserva,
                 cliente=cliente,
                 atividade=atividade,
-                valor_cobrado=valor_c
+                valor_cobrado=valor_c,
+                status_checkin=status_c
             )
 
         # 4. PAGAMENTOS (SINAL E CAIXA)

@@ -168,6 +168,11 @@
         const container = document.getElementById('container-passageiros');
         const id = contador++;
         
+        // --- LÓGICA DO STATUS (Pier ou Branco/Neutro) ---
+        // Se estiver editando, pega o status que veio do banco. Se for novo, fica em branco ("").
+        const statusC = dados && dados.status_checkin ? dados.status_checkin : "";
+        const isPier = (statusC === "PIER");
+        
         const card = document.createElement('div');
         card.className = 'card-passageiro';
         card.id = `card-${id}`;
@@ -179,6 +184,18 @@
             <div class="field-group">
                 <label>Nome Completo</label>
                 <input type="text" name="nome" value="${dados ? dados.nome : ''}" required>
+            </div>
+
+            <div class="field-group" style="display: flex; align-items: center; margin-top: -5px; margin-bottom: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569; font-weight: 500; font-size: 14px;">
+                    <input type="checkbox" 
+                           onchange="this.nextElementSibling.value = this.checked ? 'PIER' : ''" 
+                           ${isPier ? 'checked' : ''} 
+                           style="width: 18px; height: 18px; cursor: pointer;">
+                    <input type="hidden" name="status_checkin" value="${statusC}">
+                    <span class="material-symbols-outlined" style="color: #eab308; font-size: 20px;">sailing</span>
+                    Vai direto pro Pier (Amarelo)
+                </label>
             </div>
 
             <div style="display: flex; gap: 10px;">

@@ -57,11 +57,12 @@ quantidadeClientes.addEventListener('input', function () {
         return;
     }
 
-    // Salva na memória ANTES de limpar
+    // Salva na memória ANTES de limpar (AGORA SALVA O STATUS DO PIER)
     document.querySelectorAll('.mergulhador-card').forEach((el, index) => {
         const i = index + 1;
         memoriaClientes[i] = {
             nome: document.getElementById(`nome-${i}`)?.value || '',
+            status_checkin: document.getElementById(`status-checkin-hidden-${i}`)?.value || '', // <- SALVA O PIER
             telefone: document.getElementById(`telefone-${i}`)?.value || '',
             documento: document.getElementById(`doc-${i}`)?.value || '',
             peso: document.getElementById(`peso-${i}`)?.value || '',
@@ -85,6 +86,10 @@ quantidadeClientes.addEventListener('input', function () {
         // Cria o campo de ID oculto para edição
         const inputHiddenID = `<input type="hidden" name="cr_id" id="cr-id-${i}" value="">`;
 
+        // Puxa da memória se é PIER ou se está em branco
+        const statusMemoria = memoriaClientes[i] ? (memoriaClientes[i].status_checkin || "") : "";
+        const isPier = (statusMemoria === "PIER");
+
         divCliente.innerHTML = `
             <div class="card-header">
                 <h3><span class="material-symbols-outlined">person</span> Mergulhador ${i}</h3>
@@ -98,6 +103,21 @@ quantidadeClientes.addEventListener('input', function () {
                             <label>Nome Completo:</label>
                             <input type="text" name="nome" id="nome-${i}" class="modern-input" required>
                         </div>
+                        
+                        <div class="inputs field-group" style="flex: 1; min-width: 150px; display: flex; align-items: flex-end; padding-bottom: 5px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569; font-weight: 500; font-size: 13px; margin:0;">
+                                <input type="checkbox" id="check-pier-${i}"
+                                       onchange="this.nextElementSibling.value = this.checked ? 'PIER' : ''" 
+                                       ${isPier ? 'checked' : ''} 
+                                       style="width: 18px; height: 18px; cursor: pointer;">
+                                <input type="hidden" name="status_checkin" id="status-checkin-hidden-${i}" value="${statusMemoria}">
+                                <span class="material-symbols-outlined" style="color: #eab308; font-size: 18px;">sailing</span>
+                                Direto pro Pier (Amarelo)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="fields-row" style="margin-top: 10px;">
                         <div class="inputs field-group" style="flex: 1; min-width: 150px;">
                             <label>Telefone:</label>
                             <input type="tel" name="telefone" id="telefone-${i}" class="modern-input" placeholder="(22) 99999-9999">
@@ -234,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('input[type="date"]').value = DADOS_EDICAO.data;
         document.querySelector('select[name="vendedor"]').value = DADOS_EDICAO.vendedor;
         
-        // CORRIGIDO O ID AQUI PARA 'quantidade-cliente'
         let selectQtde = document.getElementById('quantidade-cliente');
         selectQtde.value = DADOS_EDICAO.quantidade;
 
@@ -242,8 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
         DADOS_EDICAO.clientes.forEach((cli, index) => {
             let i = index + 1;
             memoriaClientes[i] = {
-                cr_id: cli.cr_id, // Passa o ID do banco!
+                cr_id: cli.cr_id, 
                 nome: cli.nome,
+                status_checkin: cli.status_checkin || '', // <-- PUXA O STATUS DA EDIÇÃO
                 telefone: cli.telefone,
                 documento: cli.documento,
                 peso: cli.peso,
