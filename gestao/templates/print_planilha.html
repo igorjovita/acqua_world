@@ -63,7 +63,15 @@
                 <tr>
                     <td class="centro" style="font-weight: bold; background-color: #eee;">{{ forloop.counter }}</td>
                     {% if op %}
-                        <td>{{ op.cliente.nome }}</td>
+                        <td 
+                            {% if op.status_checkin == 'LOJA' %}
+                                style="background-color: #bfdbfe !important; font-weight: bold;"
+                            {% elif op.status_checkin == 'PIER' %}
+                                style="background-color: #fef08a !important; font-weight: bold;"
+                            {% endif %}
+                        >
+                            {{ op.cliente.nome }}
+                        </td>
                         <td>{{ op.cliente.telefone|default:"-" }}</td>
                         <td>{{ op.reserva.vendedor.nome }}</td>
                         <td class="centro">{{ op.atividade.apelido }}</td>

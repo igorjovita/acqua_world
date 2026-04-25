@@ -2,50 +2,60 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import datetime, timedelta
 import json
-from gestao.services import processar_salvamento_reserva
+from gestao.services import deletar_cliente_da_reserva, processar_salvamento_reserva
 
 from gestao.models import Vendedor, Atividade, Reserva, ClienteReserva
 
 def homepage(request):
     # ==========================================
-    # 1. ESCUTA O BOTÃO DE EXCLUIR (POST)
+    # 1. PROCESSAR AÇÃO (POST)
     # ==========================================
     if request.method == 'POST':
-        delete_id = request.POST.get('delete_id')
-        if delete_id:
-            try:
-                # Busca o cliente específico
-                cr = ClienteReserva.objects.get(id=delete_id)
-                reserva = cr.reserva
-                cr.delete() # Apaga o cliente
+        acao = request.POST.get('acao')
+        
+        if acao == 'excluir':
+            # Sua lógica de exclusão atual...
+            deletar_cliente_da_reserva(request.POST.get('delete_id'))
+            
+        elif acao in ['checkin_loja', 'checkin_pier']:
+            # Lógica Nova do Check-in
+            ids_selecionados = request.POST.getlist('cr_ids')
+            novo_status = 'LOJA' if acao == 'checkin_loja' else 'PIER'
+            
+            if ids_selecionados:
+                ClienteReserva.objects.filter(id__in=ids_selecionados).update(status_checkin=novo_status)
                 
-                # Se esse era o único cliente da reserva, apaga a reserva inteira para não deixar lixo no banco
-                if reserva.passageiros.count() == 0:
-                    reserva.delete()
-            except ClienteReserva.DoesNotExist:
-                pass
-                
-        # Atualiza a página mantendo você na mesma data que estava olhando
         return redirect(request.get_full_path())
 
     # ==========================================
-    # 2. CARREGA A TABELA E FILTROS (GET)
+    # 2. CARREGAR TELA (GET)
     # ==========================================
-    operacoes = ClienteReserva.objects.select_related('cliente', 'reserva', 'reserva__vendedor', 'atividade').all().order_by('cliente__nome')
+    context, template = _preparar_contexto_homepage(request)
+    return render(request, template, context)
 
+
+# --- FUNÇÕES AJUDANTES (Isoladas da View Principal) ---
+def _preparar_contexto_homepage(request):
+    """
+    Constrói a QuerySet de operações, aplica os filtros de busca,
+    gera os resumos do dia e decide se o layout é Mobile ou Desktop.
+    """
     filtro_data = request.GET.get('data')
     filtro_vendedor = request.GET.get('vendedor')
     filtro_atividade = request.GET.get('atividade')
 
-    if filtro_data is None:
+    # Regra da Data Padrão (Antes das 10h = Hoje, Depois = Amanhã)
+    if not filtro_data:
         agora = timezone.localtime(timezone.now()) 
         if agora.hour < 10:
             filtro_data = agora.strftime('%Y-%m-%d')
         else:
             amanha = agora + timedelta(days=1)
             filtro_data = amanha.strftime('%Y-%m-%d')
-    elif filtro_data == "":
-        filtro_data = None
+
+    operacoes = ClienteReserva.objects.select_related(
+        'cliente', 'reserva', 'reserva__vendedor', 'atividade'
+    ).all().order_by('cliente__nome')
 
     if filtro_data:
         operacoes = operacoes.filter(reserva__data=filtro_data)
@@ -60,12 +70,14 @@ def homepage(request):
             data_obj = datetime.strptime(filtro_data, '%Y-%m-%d').date()
         except ValueError:
             pass
+            
+    # Agregação: Contagem de atividades
     contagem_atividades = {}
     for op in operacoes:
         apelido = op.atividade.apelido
         contagem_atividades[apelido] = contagem_atividades.get(apelido, 0) + 1
 
-    # Detecta se é Mobile (Simples e eficiente)
+    # Detecta Dispositivo
     user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
     is_mobile = any(device in user_agent for device in ['iphone', 'android', 'mobile'])
 
@@ -81,12 +93,10 @@ def homepage(request):
             'atividade': filtro_atividade,
         }
     }
-
-    if is_mobile:
-        return render(request, 'homepage_mobile.html', context)
-        
     
-    return render(request, 'homepage.html', context)
+    template = 'homepage_mobile.html' if is_mobile else 'homepage.html'
+    
+    return context, template
 
 
 

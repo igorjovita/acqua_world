@@ -99,6 +99,12 @@ class ClienteReserva(models.Model):
     data_acerto = models.DateField(null=True, blank=True) 
     forma_pg_acerto = models.CharField(max_length=50, null=True, blank=True)
 
+    status_checkin = models.CharField(
+        max_length=15, 
+        choices=[('LOJA', 'Loja'), ('PIER', 'Pier')], 
+        null=True, blank=True
+    )
+
     # 1. Pega o valor Neto correto dependendo da atividade (Ex: Batismo, Turismo)
     @property
     def neto_atividade(self):

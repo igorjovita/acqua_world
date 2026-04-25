@@ -26,7 +26,7 @@ def comissoes(request):
 def _preparar_contexto_comissoes(dados_get):
     """
     Filtra as reservas não liquidadas e formata os dados 
-    para a tabela de fechamento de comissões.
+    para a tabela de fechamento de comissões, aplicando regras de B2B.
     """
     data_inicio = dados_get.get('inicio')
     data_fim = dados_get.get('fim')
@@ -40,7 +40,7 @@ def _preparar_contexto_comissoes(dados_get):
 
     reservas_qs = Reserva.objects.filter(
         data__range=[data_inicio, data_fim],
-        data__lte=hoje,
+        data__lte=hoje, # Já garante que o mergulho aconteceu (Check-in/Data passada)
         passageiros__acerto_liquidado=False
     ).distinct().select_related('vendedor').prefetch_related('passageiros__cliente', 'passageiros__atividade')
 
@@ -50,23 +50,39 @@ def _preparar_contexto_comissoes(dados_get):
     lista_comissoes = []
 
     for r in reservas_qs:
-        crs = r.passageiros.filter(acerto_liquidado=False)
-        if not crs: continue
+        # =========================================================
+        # PORTÃO 1: A reserva foi totalmente paga?
+        # =========================================================
+        todos_passageiros = r.passageiros.all()
+        total_cobrado = sum(cr.valor_cobrado for cr in todos_passageiros)
+        total_pago = sum(cr.recebido_loja + cr.retido_vendedor for cr in todos_passageiros)
+
+        # Se o que foi pago for menor que o valor cobrado, o cliente ainda deve.
+        # Portanto, não entra no acerto de comissões. Pula para a próxima reserva.
+        if total_pago < total_cobrado:
+            continue
+
+        # =========================================================
+        # PROCESSAMENTO NORMAL DAS COMISSÕES
+        # =========================================================
+        crs_pendentes = r.passageiros.filter(acerto_liquidado=False)
+        if not crs_pendentes: 
+            continue
 
         # Lógica Igor + 1
-        primeiro_passageiro = crs.first()
+        primeiro_passageiro = crs_pendentes.first()
         primeiro_nome = primeiro_passageiro.cliente.nome.split()[0]
-        qtd_extras = crs.count() - 1
+        qtd_extras = crs_pendentes.count() - 1
         nome_exibicao = f"{primeiro_nome} + {qtd_extras}" if qtd_extras > 0 else primeiro_nome
 
-        # Lógica Composição (ex: 1 BAT + 1 ACP)
+        # Lógica Composição e Saldos
         contagem = {}
         sub_neto = Decimal('0.00')
         sub_acqua = Decimal('0.00')
         sub_vend = Decimal('0.00')
         ids_linha = []
 
-        for cr in crs:
+        for cr in crs_pendentes:
             sigla = cr.atividade.apelido
             contagem[sigla] = contagem.get(sigla, 0) + 1
             sub_neto += cr.neto_atividade
@@ -76,6 +92,20 @@ def _preparar_contexto_comissoes(dados_get):
 
         composicao = " + ".join([f"{q} {s}" for s, q in contagem.items()])
         saldo = sub_neto - sub_acqua
+
+        # =========================================================
+        # PORTÃO 2: Auto-Liquidação (Saldo Zero)
+        # =========================================================
+        # Se a reserva está paga E ninguém deve ninguém (a loja pegou exatos 400 e o parceiro exatos 100)
+        if saldo == Decimal('0.00'):
+            # Marca como liquidado no banco de dados automaticamente
+            crs_pendentes.update(
+                acerto_liquidado=True, 
+                data_acerto=hoje, 
+                forma_pg_acerto='AUTO_BAIXA_SALDO_ZERO'
+            )
+            # Como já foi resolvida, pula e não mostra na tela de comissões pendentes
+            continue
 
         lista_comissoes.append({
             'id_reserva': r.id,

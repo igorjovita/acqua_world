@@ -187,3 +187,24 @@ def processar_acerto_comissao(dados_post):
         data_acerto=data_acerto, 
         forma_pg_acerto=forma_pg_acerto
     )
+
+
+
+@transaction.atomic
+def deletar_cliente_da_reserva(delete_id):
+    """
+    Remove um passageiro da reserva. Se a reserva ficar vazia, remove a reserva mãe.
+    """
+    if not delete_id:
+        return
+        
+    try:
+        cr = ClienteReserva.objects.get(id=delete_id)
+        reserva = cr.reserva
+        cr.delete() # Apaga o passageiro
+        
+        # Se a reserva ficou vazia, limpa o lixo do banco
+        if reserva.passageiros.count() == 0:
+            reserva.delete()
+    except ClienteReserva.DoesNotExist:
+        pass
