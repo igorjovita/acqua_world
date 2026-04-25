@@ -122,7 +122,7 @@ function renderizarHistorico() {
             divMob.innerHTML += `
                 <div class="swipe-container" ontouchstart="handleTouchStart(event)" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event, this)">
                     <div class="swipe-content">
-                        <div class="hist-linha">
+                        <div class="hist-linha" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                             <span class="hist-data">${pg.data || 'N/A'}</span>
                             <span class="hist-valor">R$ ${pg.valor.toFixed(2)}</span>
                         </div>
