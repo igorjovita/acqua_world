@@ -82,8 +82,7 @@
                     <button type="button" class="tab-btn" id="btn-tab-historico" onclick="alternarAba('historico')">Ver Histórico</button>
                 </div>
 
-                <div id="aba-checkout" class="aba-content ativo">
-                    </div>
+                
 
                 <div id="aba-historico" class="aba-content" style="display: none;">
                     <div class="historico-container" style="max-height: 300px; overflow-y: auto;">
@@ -102,57 +101,60 @@
                         </table>
                     </div>
                 </div>
+                <div id="aba-checkout" class="aba-content ativo">
+                    
 
-                <div class="tabela-checkout-container" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                    <table class="operacao-table" style="font-size: 13px;">
-                        <thead style="background: #f8fafc;">
-                            <tr>
-                                <th><input type="checkbox" id="check-all-passageiros" onclick="selecionarTodosPassageiros(this)"></th>
-                                <th>Nome Cliente</th>
-                                <th>Atividade</th>
-                                <th>Cobrado</th>
-                                <th>Total Pago</th>
-                                <th>A Receber</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-passageiros-checkin">
-                            </tbody>
-                    </table>
-                </div>
+                    <div class="tabela-checkout-container" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                        <table class="operacao-table" style="font-size: 13px;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th><input type="checkbox" id="check-all-passageiros" onclick="selecionarTodosPassageiros(this)"></th>
+                                    <th>Nome Cliente</th>
+                                    <th>Atividade</th>
+                                    <th>Cobrado</th>
+                                    <th>Total Pago</th>
+                                    <th>A Receber</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-passageiros-checkin">
+                                </tbody>
+                        </table>
+                    </div>
 
-                <div class="checkout-footer" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px;">
-                    <div class="field-group">
-                        <label>Valor a Receber Agora (R$)</label>
-                        <input type="number" step="0.01" name="valor_total_pagamento" id="input-valor-final" class="modern-input" style="font-weight: bold; color: #1e293b;">
+                    <div class="checkout-footer" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px;">
+                        <div class="field-group">
+                            <label>Valor a Receber Agora (R$)</label>
+                            <input type="number" step="0.01" name="valor_total_pagamento" id="input-valor-final" class="modern-input" style="font-weight: bold; color: #1e293b;">
+                        </div>
+                        <div class="field-group">
+                            <label>Forma de Pagamento</label>
+                            <select name="forma_pg" class="modern-input" required>
+                                <option value="PIX">Pix</option>
+                                <option value="DINHEIRO">Dinheiro</option>
+                                <option value="CREDITO">Cartão Crédito</option>
+                                <option value="DEBITO">Cartão Débito</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Quem Pagou?</label>
+                            <select name="pagador_pg" class="modern-input">
+                                <option value="CLIENTE">O Cliente</option>
+                                <option value="VENDEDOR">O Vendedor (Repasse)</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Quem Recebeu?</label>
+                            <select name="recebedor_pg" class="modern-input">
+                                <option value="LOJA">A Loja (Acqua World)</option>
+                                <option value="VENDEDOR">O Vendedor (Sinal/Comissão)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="field-group">
-                        <label>Forma de Pagamento</label>
-                        <select name="forma_pg" class="modern-input" required>
-                            <option value="PIX">Pix</option>
-                            <option value="DINHEIRO">Dinheiro</option>
-                            <option value="CREDITO">Cartão Crédito</option>
-                            <option value="DEBITO">Cartão Débito</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label>Quem Pagou?</label>
-                        <select name="pagador_pg" class="modern-input">
-                            <option value="CLIENTE">O Cliente</option>
-                            <option value="VENDEDOR">O Vendedor (Repasse)</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label>Quem Recebeu?</label>
-                        <select name="recebedor_pg" class="modern-input">
-                            <option value="LOJA">A Loja (Acqua World)</option>
-                            <option value="VENDEDOR">O Vendedor (Sinal/Comissão)</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn-cancelar" onclick="fecharModalAcerto()">Cancelar</button>
-                    <button type="submit" class="btn-salvar">Confirmar Recebimento</button>
+                    <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" class="btn-cancelar" onclick="fecharModalAcerto()">Cancelar</button>
+                        <button type="submit" class="btn-salvar">Confirmar Recebimento</button>
+                    </div>
                 </div>
             </form>
         </div>
