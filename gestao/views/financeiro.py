@@ -1,82 +1,33 @@
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import  timedelta
 from decimal import Decimal
 import json
 
-from gestao.models import Caixa, Reserva, ClienteReserva, Pagamento
+from gestao.models import Caixa, Reserva
+from gestao.services import processar_pagamentos_loja
 
 def pagamentos(request):
     # ==========================================
-    # PROCESSAR PAGAMENTO (POST)
+    # 1. PROCESSAR PAGAMENTO (POST)
     # ==========================================
     if request.method == "POST":
-        reserva_id = request.POST.get("reserva_id")
-        tipo_pg = request.POST.get("tipo_acerto") # 'grupo' ou 'individual'
-        
-        reserva = Reserva.objects.get(id=reserva_id)
-        
-        if tipo_pg == 'grupo':
-            # Pagamento do saldo total restante
-            valor_pago = Decimal(request.POST.get("valor_grupo"))
-            forma_pg = request.POST.get("forma_pg_grupo")
-            
-            # Atrelamos o pagamento ao primeiro passageiro da reserva
-            primeiro_cliente = reserva.passageiros.first()
-            p = Pagamento.objects.create(
-                cliente_reserva=primeiro_cliente,
-                valor=valor_pago,
-                forma_pg=forma_pg,
-                recebedor='LOJA',
-                descricao="Acerto Final (Grupo)"
-            )
-
-            Caixa.objects.create(
-                data=timezone.localtime(timezone.now()).date(),
-                tipo='ENTRADA',
-                descricao=f"ACERTO GRUPO: {primeiro_cliente.cliente.nome}".upper(),
-                forma_pg=forma_pg,
-                valor=valor_pago,
-                pagamento_origem=p
-            )
-            
-        elif tipo_pg == 'individual':
-            # Pagamento separado por pessoa
-            ids_cr = request.POST.getlist("id_cr")
-            valores = request.POST.getlist("valor_ind")
-            formas = request.POST.getlist("forma_pg_ind")
-            
-            for i in range(len(ids_cr)):
-                valor = Decimal(valores[i])
-                if valor > 0: # Só cria registro se o valor digitado for maior que 0
-                    cr = ClienteReserva.objects.get(id=ids_cr[i])
-                    p = Pagamento.objects.create(
-                        cliente_reserva=cr,
-                        valor=valor,
-                        forma_pg=formas[i],
-                        recebedor='LOJA',
-                        descricao="Acerto Final (Individual)"
-                    )
-                    Caixa.objects.create(
-                        data=timezone.localtime(timezone.now()).date(),
-                        tipo='ENTRADA',
-                        descricao=f"ACERTO FINAL: {cr.cliente.nome}".upper(),
-                        forma_pg=formas[i],
-                        valor=valor,
-                        pagamento_origem=p
-                    )
-        
-        # Opcional: Se o saldo zerou, podemos mudar o status da reserva para FINALIZADA
-        # reserva.situacao = 'FINALIZADA'
-        # reserva.save()
-        
+        processar_pagamentos_loja(request.POST)
         return redirect('pagamentos')
 
     # ==========================================
-    # CARREGAR TELA (GET)
+    # 2. CARREGAR TELA (GET)
     # ==========================================
     filtro_data = request.GET.get('data')
+    context = _preparar_contexto_pagamentos(filtro_data)
+    
+    return render(request, 'pagamentos.html', context)
 
+
+# --- FUNÇÃO AJUDANTE (Isolada da View Principal) ---
+def _preparar_contexto_pagamentos(filtro_data):
+    """ Regra de negócio para buscar e formatar os dados da tela de pagamentos """
+    
     if filtro_data is None:
         agora = timezone.localtime(timezone.now()) 
         if agora.hour < 10:
@@ -87,7 +38,6 @@ def pagamentos(request):
     elif filtro_data == "":
         filtro_data = None
 
-    # Busca as Reservas e traz os passageiros e pagamentos de uma vez só (otimização)
     reservas_query = Reserva.objects.prefetch_related(
         'passageiros__cliente', 'passageiros__pagamentos'
     ).all().order_by('data')
@@ -101,7 +51,6 @@ def pagamentos(request):
         passageiros = r.passageiros.all()
         if not passageiros: continue
         
-        # Nome de exibição (Igor + 1)
         primeiro_nome = passageiros[0].cliente.nome.split()[0]
         qtd_extras = len(passageiros) - 1
         nome_exibicao = f"{primeiro_nome} + {qtd_extras}" if qtd_extras > 0 else primeiro_nome
@@ -111,19 +60,28 @@ def pagamentos(request):
         pago_acqua = Decimal('0.00')
         
         passageiros_json = []
+        historico_pagamentos = [] # <--- LISTA NOVA AQUI
         
         for p in passageiros:
             total_reserva += p.valor_cobrado
-            
-            # Separação dos pagamentos por recebedor
             pagamentos_cliente = p.pagamentos.all()
+            
             for pg in pagamentos_cliente:
                 if pg.recebedor == 'VENDEDOR':
                     pago_vendedor += pg.valor
                 else:
                     pago_acqua += pg.valor
+                    
+                # Guardamos o histórico para mostrar na tela
+                historico_pagamentos.append({
+                    'id': pg.id,
+                    'valor': float(pg.valor),
+                    'forma': pg.forma_pg,
+                    'recebedor': pg.recebedor,
+                    'descricao': pg.descricao,
+                    'passageiro': p.cliente.nome
+                })
             
-            # Saldo individual para o modal
             ja_pago_total = sum(pg.valor for pg in pagamentos_cliente)
             passageiros_json.append({
                 'id_cr': p.id,
@@ -145,14 +103,17 @@ def pagamentos(request):
             'total_reserva': total_reserva,
             'valor_a_receber': valor_a_receber,
             'status': status,
+            'historico_json': json.dumps(historico_pagamentos), # <--- MANDANDO PRO HTML
             'passageiros_json': json.dumps(passageiros_json)
         })
 
-    context = {
+    return {
         'reservas': dados_reservas,
         'filtro_data': filtro_data
     }
-    return render(request, 'pagamentos.html', context)
+
+
+
 
 def caixa(request):
     # ==========================================

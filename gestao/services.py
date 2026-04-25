@@ -108,3 +108,126 @@ def processar_salvamento_reserva(dados_post):
                         valor=v_sinal,
                         pagamento_origem=p
                     )
+
+
+@transaction.atomic
+def processar_pagamentos_loja(dados_post):
+    """
+    Registra pagamentos avulsos para a reserva, identificando 
+    quem pagou e quem recebeu para clareza no extrato.
+    """
+    reserva_id = dados_post.get("reserva_id")
+    tipo_pg = dados_post.get("tipo_acerto")
+    data_pg = dados_post.get("data_pagamento") or timezone.localtime(timezone.now()).strftime('%Y-%m-%d')
+    recebedor = dados_post.get("recebedor_pg", "LOJA")
+    pagador = dados_post.get("pagador_pg", "CLIENTE") # NOVO CAMPO AQUI!
+    
+    reserva = Reserva.objects.get(id=reserva_id)
+    
+    # ---------------------------------------------------------
+    # PAGAMENTO EM GRUPO (Tudo Junto)
+    # ---------------------------------------------------------
+    if tipo_pg == 'grupo':
+        v_bruto = dados_post.get("valor_grupo", "0")
+        valor_pago = Decimal(v_bruto.replace(',', '.') if v_bruto else '0')
+        forma_pg = dados_post.get("forma_pg_grupo")
+        primeiro_cliente = reserva.passageiros.first()
+        
+        # Define os textos baseados em quem pagou
+        desc_extrato = "Pagamento Avulso (Cliente)" if pagador == 'CLIENTE' else "Repasse (Vendedor)"
+        desc_caixa = f"PAGAMENTO: {primeiro_cliente.cliente.nome}".upper() if pagador == 'CLIENTE' else f"REPASSE VENDEDOR: {primeiro_cliente.cliente.nome}".upper()
+        
+        if valor_pago > 0:
+            p = Pagamento.objects.create(
+                cliente_reserva=primeiro_cliente,
+                valor=valor_pago,
+                forma_pg=forma_pg,
+                recebedor=recebedor,
+                descricao=desc_extrato
+            )
+            
+            if recebedor == 'LOJA':
+                Caixa.objects.create(
+                    data=data_pg,
+                    tipo='ENTRADA',
+                    descricao=desc_caixa,
+                    forma_pg=forma_pg,
+                    valor=valor_pago,
+                    pagamento_origem=p
+                )
+            
+    # ---------------------------------------------------------
+    # PAGAMENTO INDIVIDUAL (Separado)
+    # ---------------------------------------------------------
+    elif tipo_pg == 'individual':
+        ids_cr = dados_post.getlist("id_cr")
+        valores = dados_post.getlist("valor_ind")
+        formas = dados_post.getlist("forma_pg_ind")
+        
+        for i in range(len(ids_cr)):
+            v_bruto = valores[i] if i < len(valores) else "0"
+            valor = Decimal(v_bruto.replace(',', '.') if v_bruto else '0')
+            
+            if valor > 0:
+                cr = ClienteReserva.objects.get(id=ids_cr[i])
+                
+                desc_extrato = "Pagamento Individual (Cliente)" if pagador == 'CLIENTE' else "Repasse (Vendedor)"
+                desc_caixa = f"PAGAMENTO: {cr.cliente.nome}".upper() if pagador == 'CLIENTE' else f"REPASSE VENDEDOR: {cr.cliente.nome}".upper()
+
+                p = Pagamento.objects.create(
+                    cliente_reserva=cr,
+                    valor=valor,
+                    forma_pg=formas[i],
+                    recebedor=recebedor,
+                    descricao=desc_extrato
+                )
+                
+                if recebedor == 'LOJA':
+                    Caixa.objects.create(
+                        data=data_pg,
+                        tipo='ENTRADA',
+                        descricao=desc_caixa,
+                        forma_pg=formas[i],
+                        valor=valor,
+                        pagamento_origem=p
+                    )
+
+
+@transaction.atomic
+def processar_acerto_comissao(dados_post):
+    """
+    Processa o acerto de contas em lote com um vendedor parceiro.
+    Liquida as reservas selecionadas e lança o saldo no Livro Caixa automaticamente.
+    """
+    cr_ids_str = dados_post.get('cr_ids')
+    data_acerto = dados_post.get('data_acerto')
+    forma_pg_acerto = dados_post.get('forma_pg_acerto')
+    
+    if not cr_ids_str:
+        return # Proteção caso venha vazio
+        
+    lista_ids = cr_ids_str.split(',')
+    objetos = ClienteReserva.objects.filter(id__in=lista_ids)
+    
+    if not objetos.exists():
+        return
+        
+    # Automação de Caixa (se saldo != 0)
+    saldo_total = sum((o.neto_atividade - o.recebido_loja) for o in objetos)
+    
+    if saldo_total != 0:
+        v_nome = objetos.first().reserva.vendedor.nome
+        Caixa.objects.create(
+            data=data_acerto,
+            tipo='ENTRADA' if saldo_total > 0 else 'SAIDA',
+            descricao=f"ACERTO COMISSÃO: {v_nome}".upper(),
+            forma_pg=forma_pg_acerto,
+            valor=abs(saldo_total)
+        )
+
+    # Marca todos os clientes selecionados como liquidados
+    objetos.update(
+        acerto_liquidado=True, 
+        data_acerto=data_acerto, 
+        forma_pg_acerto=forma_pg_acerto
+    )

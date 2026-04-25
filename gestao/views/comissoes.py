@@ -4,48 +4,40 @@ from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
 
-from gestao.models import Caixa, Reserva, ClienteReserva, Vendedor
+from gestao.models import Reserva, Vendedor
+from gestao.services import processar_acerto_comissao
 
 def comissoes(request):
     # ==========================================
-    # PROCESSAR O ACERTO (POST) - Continua igual
+    # 1. PROCESSAR O ACERTO (POST)
     # ==========================================
     if request.method == 'POST':
-        cr_ids_str = request.POST.get('cr_ids')
-        data_acerto = request.POST.get('data_acerto')
-        forma_pg_acerto = request.POST.get('forma_pg_acerto')
-        
-        if cr_ids_str:
-            lista_ids = cr_ids_str.split(',')
-            objetos = ClienteReserva.objects.filter(id__in=lista_ids)
-            
-            # Automação de Caixa (se saldo != 0)
-            saldo_total = sum((o.neto_atividade - o.recebido_loja) for o in objetos)
-            if saldo_total != 0:
-                v_nome = objetos.first().reserva.vendedor.nome
-                Caixa.objects.create(
-                    data=data_acerto,
-                    tipo='ENTRADA' if saldo_total > 0 else 'SAIDA',
-                    descricao=f"ACERTO COMISSÃO: {v_nome}".upper(),
-                    forma_pg=forma_pg_acerto,
-                    valor=abs(saldo_total)
-                )
-
-            objetos.update(acerto_liquidado=True, data_acerto=data_acerto, forma_pg_acerto=forma_pg_acerto)
+        processar_acerto_comissao(request.POST)
         return redirect('comissoes')
 
     # ==========================================
-    # CARREGAR A TELA (GET)
+    # 2. CARREGAR A TELA (GET)
     # ==========================================
-    data_inicio = request.GET.get('inicio')
-    data_fim = request.GET.get('fim')
-    vendedor_id = request.GET.get('vendedor')
+    context = _preparar_contexto_comissoes(request.GET)
+    return render(request, 'comissoes.html', context)
+
+
+# --- FUNÇÃO AJUDANTE (Isolada da View Principal) ---
+def _preparar_contexto_comissoes(dados_get):
+    """
+    Filtra as reservas não liquidadas e formata os dados 
+    para a tabela de fechamento de comissões.
+    """
+    data_inicio = dados_get.get('inicio')
+    data_fim = dados_get.get('fim')
+    vendedor_id = dados_get.get('vendedor')
 
     hoje = timezone.localtime(timezone.now()).date()
-    if not data_inicio: data_inicio = hoje.replace(day=1).strftime('%Y-%m-%d')
-    if not data_fim: data_fim = hoje.strftime('%Y-%m-%d')
+    if not data_inicio: 
+        data_inicio = hoje.replace(day=1).strftime('%Y-%m-%d')
+    if not data_fim: 
+        data_fim = hoje.strftime('%Y-%m-%d')
 
-    # Filtro de reservas que já aconteceram e não foram liquidadas
     reservas_qs = Reserva.objects.filter(
         data__range=[data_inicio, data_fim],
         data__lte=hoje,
@@ -67,7 +59,7 @@ def comissoes(request):
         qtd_extras = crs.count() - 1
         nome_exibicao = f"{primeiro_nome} + {qtd_extras}" if qtd_extras > 0 else primeiro_nome
 
-        # Lógica Composição (1 BAT + 1 ACP)
+        # Lógica Composição (ex: 1 BAT + 1 ACP)
         contagem = {}
         sub_neto = Decimal('0.00')
         sub_acqua = Decimal('0.00')
@@ -99,14 +91,11 @@ def comissoes(request):
             'ids_cr': ",".join(ids_linha)
         })
 
-    context = {
+    return {
         'comissoes': lista_comissoes,
         'vendedores_list': Vendedor.objects.all().order_by('nome'),
         'filtros': {'inicio': data_inicio, 'fim': data_fim, 'vendedor_id': vendedor_id}
     }
-    return render(request, 'comissoes.html', context)
-
-
 
 def print_comissoes(request):
     vendedor_id = request.GET.get('vendedor')
