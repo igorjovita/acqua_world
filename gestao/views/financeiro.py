@@ -5,14 +5,24 @@ from decimal import Decimal
 import json
 
 from gestao.models import Caixa, Reserva
-from gestao.services import processar_pagamentos_loja
+from gestao.services import processar_pagamentos_loja, deletar_pagamento_loja
 
 def pagamentos(request):
     # ==========================================
     # 1. PROCESSAR PAGAMENTO (POST)
     # ==========================================
     if request.method == "POST":
-        processar_pagamentos_loja(request.POST)
+        acao = request.POST.get('acao_pagamento')
+        pagamento_id = request.POST.get('pagamento_id_edicao')
+
+        if acao == 'excluir':
+            deletar_pagamento_loja(pagamento_id)
+        else:
+            # Se for edição, apaga o antigo primeiro e cria o novo com os dados atualizados
+            if pagamento_id:
+                deletar_pagamento_loja(pagamento_id)
+            processar_pagamentos_loja(request.POST)
+            
         return redirect('pagamentos')
 
     # ==========================================
@@ -85,7 +95,9 @@ def _preparar_contexto_pagamentos(filtro_data):
                 
                 historico_pagamentos.append({
                     'id': pg.id,
+                    'id_cr': p.id,
                     'data': data_pg_str,
+                    'data_iso': pg.data_pagamento.strftime('%Y-%m-%d') if hasattr(pg, 'data_pagamento') and pg.data_pagamento else '',
                     'valor': float(pg.valor or 0),
                     'forma': pg.forma_pg or 'N/A',
                     'recebedor': pg.recebedor or 'LOJA',

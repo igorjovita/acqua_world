@@ -213,3 +213,14 @@ def deletar_cliente_da_reserva(delete_id):
             reserva.delete()
     except ClienteReserva.DoesNotExist:
         pass
+
+
+@transaction.atomic
+def deletar_pagamento_loja(pagamento_id):
+    """ Deleta um pagamento e remove o lançamento do Livro Caixa atrelado a ele. """
+    p = Pagamento.objects.filter(id=pagamento_id).first()
+    if p:
+        # Deleta do Caixa primeiro (se existir)
+        Caixa.objects.filter(pagamento_origem=p).delete()
+        # Deleta o pagamento
+        p.delete()

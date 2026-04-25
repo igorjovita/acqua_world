@@ -8,22 +8,17 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f1f5f9; margin: 0; padding: 0; height: 100vh; overflow: hidden;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
 
-        /* HEADER E BUSCA */
         header { background: #091521; color: white; padding: 15px; position: fixed; top: 0; width: 100%; z-index: 100; }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .busca-data { display: flex; gap: 8px; }
         .busca-data input { padding: 10px; border-radius: 8px; border: none; outline: none; flex: 1; font-size: 14px; }
         .busca-data button { background: #0ea5e9; color: white; border: none; border-radius: 8px; padding: 0 15px; font-weight: bold; }
 
-        /* ÁREA PRINCIPAL */
         main { position: absolute; top: 110px; bottom: 70px; width: 100%; overflow-y: auto; padding: 15px; }
 
-        /* CARDS DE RESERVA */
+        /* CARDS DA RESERVA */
         .reserva-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .card-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .cliente-nome { font-size: 16px; font-weight: bold; color: #0f172a; }
@@ -34,45 +29,40 @@
         .card-info { font-size: 13px; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between; }
         .valor-destaque { font-size: 18px; font-weight: bold; color: #ef4444; }
         .valor-zerado { color: #166534; }
-
         .btn-acao { width: 100%; background: #0f172a; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-acao:disabled { background: #cbd5e1; color: #94a3b8; }
 
-        /* MODAL FULLSCREEN */
+        /* MODAL */
         .modal-mobile { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; flex-direction: column; animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
         .modal-header { background: #091521; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         .btn-fechar { background: transparent; border: none; color: white; font-size: 24px; padding: 0; }
         
-        /* ABAS DO MODAL */
         .modal-tabs { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
         .tab-btn { flex: 1; padding: 15px 0; border: none; background: transparent; font-weight: bold; color: #64748b; border-bottom: 3px solid transparent; }
         .tab-btn.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
         
-        .modal-body { flex: 1; overflow-y: auto; padding: 15px; background: #f1f5f9; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 15px; background: #f1f5f9; overflow-x: hidden; }
         .aba-content { display: none; }
         .aba-content.ativo { display: block; }
 
-        /* LISTAS DO MODAL */
+        /* LISTA E SWIPE */
         .item-passageiro { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
         .item-passageiro input[type="checkbox"] { width: 20px; height: 20px; }
-        .pass-info { flex: 1; }
-        .pass-nome { font-weight: bold; color: #0f172a; font-size: 14px; }
-        .pass-ativ { font-size: 11px; color: #64748b; }
-        .pass-saldo { font-weight: bold; color: #ef4444; font-size: 14px; text-align: right; }
-        .item-historico { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #0ea5e9; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .hist-linha { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .hist-data { font-size: 12px; color: #64748b; font-weight: bold; }
-        .hist-valor { font-weight: bold; color: #059669; }
+        
+        .swipe-container { position: relative; overflow: hidden; margin-bottom: 10px; border-radius: 10px; }
+        .swipe-content { background: white; padding: 12px; border-radius: 10px; border-left: 4px solid #0ea5e9; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; z-index: 2; transition: transform 0.3s ease; width: 100%; }
+        .swipe-content.swiped { transform: translateX(-140px); }
+        .swipe-actions { position: absolute; top: 0; right: 0; height: 100%; display: flex; z-index: 1; border-radius: 0 10px 10px 0; overflow: hidden; }
+        .btn-swipe { border: none; color: white; font-weight: bold; width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; }
+        .btn-swipe-edit { background: #f59e0b; }
+        .btn-swipe-del { background: #ef4444; }
 
-        /* FOOTER DE PAGAMENTO */
         .modal-footer { padding: 15px; background: white; border-top: 1px solid #e2e8f0; }
         .modern-input-modal { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 14px; margin-bottom: 10px; }
         label { font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; display: block; }
         .btn-confirmar { width: 100%; background: #22c55e; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; }
 
-        /* TAB BAR BOTTOM */
         .tab-bar { position: fixed; bottom: 0; width: 100%; height: 70px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
         .tab-item { text-decoration: none; color: #94a3b8; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 500; }
         .tab-item.active { color: #0ea5e9; }
@@ -108,6 +98,14 @@
                 <span>Total da Reserva:</span>
                 <span>R$ {{ res.total_reserva|floatformat:2 }}</span>
             </div>
+            <div class="card-info">
+                <span>Pago Vendedor:</span>
+                <strong style="color: #b45309;">R$ {{ res.pago_vendedor|floatformat:2 }}</strong>
+            </div>
+            <div class="card-info">
+                <span>Pago Acqua:</span>
+                <strong style="color: #166534;">R$ {{ res.pago_acqua|floatformat:2 }}</strong>
+            </div>
             
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
                 <span style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">A Receber:</span>
@@ -131,6 +129,12 @@
         {% endfor %}
     </main>
 
+    <form id="form-delete-pagamento" method="POST" action="{% url 'pagamentos' %}" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="acao_pagamento" value="excluir">
+        <input type="hidden" name="pagamento_id_edicao" id="delete-pagamento-id">
+    </form>
+
     <div class="modal-mobile" id="modal-acerto-mobile">
         <div class="modal-header">
             <div style="line-height: 1.2;">
@@ -141,21 +145,22 @@
         </div>
 
         <div class="modal-tabs">
-            <button class="tab-btn active" id="btn-tab-checkout" onclick="alternarAba('checkout')">Pagar Agora</button>
+            <button class="tab-btn active" id="btn-tab-checkout" onclick="alternarAba('checkout')">Pagar</button>
             <button class="tab-btn" id="btn-tab-historico" onclick="alternarAba('historico')">Histórico</button>
         </div>
 
         <form method="POST" action="{% url 'pagamentos' %}" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             {% csrf_token %}
             <input type="hidden" name="reserva_id" id="modal-reserva-id-mobile">
+            <input type="hidden" name="pagamento_id_edicao" id="pagamento-id-edicao-mobile">
             
             <div class="modal-body">
                 <div id="aba-checkout" class="aba-content ativo">
-                    <label style="margin-bottom: 10px;">1. Quem está pagando?</label>
+                    <label style="margin-bottom: 10px;">1. Selecione quem está pagando:</label>
                     <div id="lista-passageiros-mobile"></div>
                 </div>
-
                 <div id="aba-historico" class="aba-content">
+                    <div style="font-size: 11px; text-align: center; color: #94a3b8; margin-bottom: 10px;">Deslize para a esquerda para Editar/Apagar</div>
                     <div id="lista-historico-mobile"></div>
                 </div>
             </div>
@@ -164,18 +169,17 @@
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Data</label>
-                        <input type="date" name="data_pagamento" class="modern-input-modal" value="{% now 'Y-m-d' %}" required>
+                        <input type="date" name="data_pagamento" id="data-pagamento-mobile" class="modern-input-modal" value="{% now 'Y-m-d' %}" required>
                     </div>
                     <div style="flex: 1;">
                         <label>Valor (R$)</label>
                         <input type="number" step="0.01" name="valor_total_pagamento" id="input-valor-final-mobile" class="modern-input-modal" style="font-weight: bold; color: #0f172a;" required>
                     </div>
                 </div>
-                
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Forma</label>
-                        <select name="forma_pg" class="modern-input-modal" required>
+                        <select name="forma_pg" id="forma-pg-mobile" class="modern-input-modal" required>
                             <option value="PIX">Pix</option>
                             <option value="DINHEIRO">Dinheiro</option>
                             <option value="CREDITO">Crédito</option>
@@ -184,21 +188,20 @@
                     </div>
                     <div style="flex: 1;">
                         <label>Destino</label>
-                        <select name="recebedor_pg" class="modern-input-modal">
+                        <select name="recebedor_pg" id="recebedor-pg-mobile" class="modern-input-modal">
                             <option value="LOJA">Loja</option>
                             <option value="VENDEDOR">Vendedor</option>
                         </select>
                     </div>
                 </div>
-                
-                <input type="hidden" name="pagador_pg" value="CLIENTE">
-                <button type="submit" class="btn-confirmar">Confirmar Recebimento</button>
+                <input type="hidden" name="pagador_pg" id="pagador-pg-mobile" value="CLIENTE">
+                <button type="submit" class="btn-confirmar" id="btn-confirmar-mobile">Confirmar Recebimento</button>
             </div>
         </form>
     </div>
 
     <nav class="tab-bar">
-        <a href="{% url 'homepage' %}" class="tab-item">
+        <a href="{% url 'homepage_mobile' %}" class="tab-item">
             <span class="material-symbols-outlined">monitoring</span>Central
         </a>
         <a href="{% url 'sales' %}" class="tab-item">
