@@ -60,26 +60,27 @@ def _preparar_contexto_pagamentos(filtro_data):
         pago_acqua = Decimal('0.00')
         
         passageiros_json = []
-        historico_pagamentos = [] # <--- LISTA NOVA AQUI
+        historico_pagamentos = [] # <-- A LISTA COMEÇA AQUI
         
         for p in passageiros:
             total_reserva += p.valor_cobrado
             pagamentos_cliente = p.pagamentos.all()
             
             for pg in pagamentos_cliente:
+                # Soma os totais
                 if pg.recebedor == 'VENDEDOR':
                     pago_vendedor += pg.valor
                 else:
                     pago_acqua += pg.valor
-                    
-                # Guardamos o histórico para mostrar na tela
+                
+                # ADICIONA NO HISTÓRICO PARA O MODAL VER
                 historico_pagamentos.append({
                     'id': pg.id,
+                    'data': pg.data.strftime('%d/%m/%Y') if hasattr(pg, 'data') and pg.data else 'N/A', # Pega a data se existir no seu model
                     'valor': float(pg.valor),
                     'forma': pg.forma_pg,
                     'recebedor': pg.recebedor,
-                    'pagador': pg.pagador if hasattr(pg, 'pagador') else 'CLIENTE',
-                    'descricao': pg.descricao,
+                    'pagador': getattr(pg, 'pagador', 'CLIENTE'), # Usa getattr para não dar erro se não tiver a coluna pagador
                     'passageiro': p.cliente.nome
                 })
             
@@ -87,7 +88,7 @@ def _preparar_contexto_pagamentos(filtro_data):
             passageiros_json.append({
                 'id_cr': p.id,
                 'nome': p.cliente.nome,
-                'atividade': p.atividade.apelido,
+                'atividade': p.atividade.apelido if p.atividade else '',
                 'valor_cobrado': float(p.valor_cobrado),
                 'pago': float(ja_pago_total),
                 'saldo': float(p.valor_cobrado - ja_pago_total)
@@ -96,6 +97,7 @@ def _preparar_contexto_pagamentos(filtro_data):
         valor_a_receber = total_reserva - (pago_vendedor + pago_acqua)
         status = "PAGO" if valor_a_receber <= 0 else "PENDENTE"
         
+        # O PULO DO GATO: Garantir que o historico_json está sendo enviado!
         dados_reservas.append({
             'id': r.id,
             'nome_exibicao': nome_exibicao,
@@ -105,15 +107,9 @@ def _preparar_contexto_pagamentos(filtro_data):
             'total_reserva': total_reserva,
             'valor_a_receber': valor_a_receber,
             'status': status,
-            'historico_json': json.dumps(historico_pagamentos), # <--- MANDANDO PRO HTML
-            'passageiros_json': json.dumps(passageiros_json)
+            'passageiros_json': json.dumps(passageiros_json),
+            'historico_json': json.dumps(historico_pagamentos) # <-- TEM QUE TER ESSA LINHA
         })
-
-    return {
-        'reservas': dados_reservas,
-        'filtro_data': filtro_data
-    }
-
 
 
 

@@ -43,3 +43,51 @@
 .btn-cancelar { background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 .btn-salvar { background: #10b981; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 .btn-salvar:hover { background: #059669; }
+
+
+/* Estilo das Abas no Modal */
+.tabs-pagamento {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0 !important; /* Tira o padding para a borda colar no botão */
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent; /* Linha invisível por padrão */
+    transition: all 0.2s ease;
+    margin-bottom: -2px; /* Faz a linha do botão sobrepor a linha do container */
+}
+
+.tab-btn:hover {
+    color: #0f172a;
+}
+
+/* Quando a aba está ativa, ela ganha destaque e uma linha azul/verde embaixo */
+.tab-btn.active {
+    color: #0ea5e9; /* Cor principal da Acqua World */
+    border-bottom: 3px solid #0ea5e9;
+}
+
+/* Esconde as abas suavemente */
+.aba-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.aba-content.ativo {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
