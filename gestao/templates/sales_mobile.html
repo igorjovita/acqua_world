@@ -114,7 +114,7 @@
 <div id="modalVendedor" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; padding:20px;">
     <div style="background:white; padding:25px; border-radius:15px; width:100%; max-width:400px;">
         <h3 style="margin-top:0;">Cadastrar Vendedor</h3>
-        <form method="POST">
+        <form method="POST" action="{% url 'cadastrar_vendedor' %}">
             {% csrf_token %}
             <input type="hidden" name="form" value="form-vendedor">
             

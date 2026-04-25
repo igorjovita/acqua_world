@@ -62,7 +62,7 @@
 
     <div class="modal-overlay" id="modal-vendedor">
         <div class="modal-content">
-            <form method="POST">
+            <form method="POST" action="{% url 'cadastrar_vendedor' %}">
                 {% csrf_token %}
                 <h2 class="titulo-modal">Cadastrar Vendedor</h2>
                 
@@ -108,7 +108,7 @@
 
     <div class="modal-overlay" id="modal-atividade">
         <div class="modal-content">
-            <form method="POST">
+            <form method="POST" action="{% url 'cadastrar_atividade' %}">
                 {% csrf_token %}
                 <h2 class="titulo-modal">Cadastrar Atividade</h2>
                 

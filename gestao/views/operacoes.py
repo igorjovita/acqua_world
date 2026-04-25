@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import datetime, timedelta
-from decimal import Decimal
 import json
+from gestao.services import processar_salvamento_reserva
 
-from gestao.models import Caixa, Cliente, Vendedor, Atividade, Reserva, ClienteReserva, Pagamento
+from gestao.models import Vendedor, Atividade, Reserva, ClienteReserva
 
 def homepage(request):
     # ==========================================
@@ -91,142 +91,26 @@ def homepage(request):
 
 
 def sales(request):
+    # ==========================================
+    # 1. PROCESSAMENTO DA VENDA (POST)
+    # ==========================================
     if request.method == "POST":
-        tipo_formulario = request.POST.get('form')
-        
-        # 1. CADASTRO RÁPIDO DE ATIVIDADE
-        if tipo_formulario == 'form-atividade':
-            Atividade.objects.create(
-                nome=request.POST.get('nome_atividade'),
-                apelido=request.POST.get('apelido_atividade'),
-                valor_padrao=Decimal(request.POST.get('valor_atividade').replace(',', '.')),
-                categoria_comissao=request.POST.get('categoria_comissao') # Novo campo
-            )
-            return redirect('sales')
-            
-        # 2. CADASTRO RÁPIDO DE VENDEDOR (Com os novos Netos e Cursos)
-        elif tipo_formulario == 'form-vendedor':
-            Vendedor.objects.create(
-                nome=request.POST.get('nome_vendedor'),
-                neto_bat=Decimal(request.POST.get('neto_bat', '200').replace(',', '.')),
-                neto_acp=Decimal(request.POST.get('neto_acp', '80').replace(',', '.')),
-                neto_turismo_1=Decimal(request.POST.get('neto_turismo_1', '330').replace(',', '.')),
-                neto_turismo_2=Decimal(request.POST.get('neto_turismo_2', '380').replace(',', '.')),
-                neto_scuba=Decimal(request.POST.get('neto_scuba', '480').replace(',', '.')),
-                neto_curso=Decimal(request.POST.get('neto_curso', '10').replace(',', '.'))
-            )
-            return redirect('sales')
-        
-        # 3. PROCESSAMENTO DA RESERVA
-        reserva_id_edicao = request.POST.get('reserva_id_edicao')
-        vendedor_id = request.POST.get('vendedor')
-        vendedor = Vendedor.objects.get(id=vendedor_id) if vendedor_id else None
-        data_reserva = request.POST.get('data')
-
-        if reserva_id_edicao:
-            reserva = Reserva.objects.get(id=reserva_id_edicao)
-            reserva.data = data_reserva
-            reserva.vendedor = vendedor
-            reserva.save()
-        else:
-            reserva = Reserva.objects.create(data=data_reserva, vendedor=vendedor)
-
-        # Captura listas do formulário
-        cr_ids = request.POST.getlist("cr_id")
-        nomes = request.POST.getlist("nome")
-        telefones = request.POST.getlist("telefone")
-        documentos = request.POST.getlist("documento")
-        pesos = request.POST.getlist("peso")
-        alturas = request.POST.getlist("altura")
-        atividades_ids = request.POST.getlist("atividade")
-        valores = request.POST.getlist("valor")
-        
-        tem_sinais = request.POST.getlist("tem_sinal")
-        valores_sinal = request.POST.getlist("valor_sinal")
-        formas_pg_sinal = request.POST.getlist("forma_pg_sinal")
-        recebedores_sinal = request.POST.getlist("recebedor_sinal")
-
-        # Gestão de remoção na edição
-        if reserva_id_edicao:
-            ids_recebidos = [int(i) for i in cr_ids if i.strip()]
-            reserva.passageiros.exclude(id__in=ids_recebidos).delete()
-
-        # 4. LOOP DE SALVAMENTO DOS PASSAGEIROS
-        for i in range(len(nomes)):
-            if not nomes[i].strip(): continue
-
-            # Documento ou temporário
-            doc_final = documentos[i].strip() if (i < len(documentos) and documentos[i].strip()) else f"TEMP_{reserva.id}_{i}"
-            
-            cliente, _ = Cliente.objects.get_or_create(
-                documento=doc_final,
-                defaults={'nome': nomes[i]}
-            )
-            # Atualiza dados do cliente sempre
-            cliente.nome = nomes[i]
-            if i < len(telefones): cliente.telefone = telefones[i]
-            if i < len(pesos) and pesos[i]: cliente.peso = Decimal(pesos[i].replace(',', '.'))
-            if i < len(alturas) and alturas[i]: cliente.altura = Decimal(alturas[i].replace(',', '.'))
-            cliente.save()
-
-            atividade = Atividade.objects.get(id=atividades_ids[i]) if atividades_ids[i] else None
-            valor_c = Decimal(valores[i].replace(',', '.')) if valores[i] else Decimal('0.00')
-
-            cr_id_atual = cr_ids[i] if i < len(cr_ids) else ""
-            
-            if cr_id_atual.strip():
-                cr = ClienteReserva.objects.get(id=int(cr_id_atual))
-                cr.cliente = cliente
-                cr.atividade = atividade
-                cr.valor_cobrado = valor_c
-                cr.save() # Aqui o model calcula a comissão sozinho!
-            else:
-                cr = ClienteReserva.objects.create(
-                    reserva=reserva,
-                    cliente=cliente,
-                    atividade=atividade,
-                    valor_cobrado=valor_c
-                ) # O create também dispara o save() do model
-
-            # 5. PAGAMENTOS (SINAL)
-            # Limpa sinais antigos se for edição para evitar duplicidade ao re-salvar
-            cr.pagamentos.filter(descricao="Sinal/Adiantamento").delete()
-
-            if i < len(tem_sinais) and tem_sinais[i] == "sim":
-                v_sinal = Decimal(valores_sinal[i].replace(',', '.')) if valores_sinal[i] else Decimal('0.00')
-                if v_sinal > 0:
-                    p = Pagamento.objects.create(
-                        cliente_reserva=cr,
-                        valor=v_sinal,
-                        forma_pg=formas_pg_sinal[i],
-                        recebedor=recebedores_sinal[i],
-                        descricao="Sinal/Adiantamento"
-                    )
-                    # Se caiu na LOJA, vai para o Livro Caixa
-                    if recebedores_sinal[i] == 'LOJA':
-                        Caixa.objects.create(
-                            data=reserva.data,
-                            tipo='ENTRADA',
-                            descricao=f"SINAL: {cliente.nome} ({atividade.apelido})".upper(),
-                            forma_pg=formas_pg_sinal[i],
-                            valor=v_sinal,
-                            pagamento_origem=p
-                        )
-
+        # Passamos todo o trabalho sujo para a camada de serviços
+        processar_salvamento_reserva(request.POST)
         return redirect('homepage')
 
     # ==========================================
-    # LÓGICA DO GET (CARREGAMENTO DA TELA)
+    # 2. CARREGAMENTO DA TELA DE VENDAS (GET)
     # ==========================================
     edit_id = request.GET.get('edit')
     dados_edicao_json = "null"
     
+    # Lógica para preencher a tela quando o usuário clica em "Editar Reserva"
     if edit_id:
         try:
             res = Reserva.objects.get(id=edit_id)
             clientes_data = []
             for cr in res.passageiros.all():
-                # Busca sinal se existir
                 sinal_pg = cr.pagamentos.filter(descricao="Sinal/Adiantamento").first()
                 clientes_data.append({
                     'cr_id': cr.id,
@@ -252,13 +136,13 @@ def sales(request):
         except Reserva.DoesNotExist:
             pass
 
-    # Prepara as atividades para o JS (Preenchimento automático de preços)
+    # Prepara as atividades para o JavaScript atualizar os preços na tela
     atividades_list = [
         {'id': a.id, 'apelido': a.apelido, 'valor_padrao': float(a.valor_padrao)} 
         for a in Atividade.objects.all()
     ]
 
-    # Detecção simples de Mobile
+    # Detecção se é Celular ou PC para carregar o HTML correto
     ua = request.META.get('HTTP_USER_AGENT', '').lower()
     is_mobile = any(x in ua for x in ['iphone', 'android', 'mobile'])
 
