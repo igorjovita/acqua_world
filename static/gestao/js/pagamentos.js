@@ -1,55 +1,47 @@
-function abrirModalAcerto(reservaId, nomeExibicao, saldoTotal, passageirosJsonStr) {
-    document.getElementById('modal-acerto').style.display = 'flex';
-    document.getElementById('modal-reserva-id').value = reservaId;
-    document.getElementById('modal-titulo-reserva').textContent = `Acerto: ${nomeExibicao}`;
+function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor) {
+    document.getElementById('modal-reserva-id').value = id;
+    document.getElementById('modal-titulo-reserva').innerText = "Reserva: " + nome;
+    document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + vendedor;
     
-    // Formata o saldo total no cabeçalho
-    document.getElementById('modal-saldo-total').textContent = saldoTotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    
-    // Preenche o input automático do pagamento em grupo
-    document.getElementById('input-valor-grupo').value = saldoTotal.toFixed(2);
-    
-    // Processa a lista de passageiros
-    const passageiros = JSON.parse(passageirosJsonStr);
-    const containerInd = document.getElementById('container-passageiros-pagamento');
-    containerInd.innerHTML = ''; // Limpa anterior
-    
-    passageiros.forEach((p, index) => {
-        // Se o saldo for 0, o passageiro já pagou a parte dele
-        const jaPago = p.saldo <= 0;
-        
-        containerInd.innerHTML += `
-            <div class="linha-passageiro-pg ${jaPago ? 'pg-concluido' : ''}">
-                <div class="info-pg-pessoal">
-                    <strong>${p.nome}</strong>
-                    <span class="info-sinal">Sinal pago: R$ ${p.pago.toFixed(2)} (${p.recebedor})</span>
-                </div>
-                
-                <input type="hidden" name="id_cr" value="${p.id_cr}">
-                
-                <div class="inputs-pg-pessoal">
-                    <div style="width: 120px;">
-                        <label>Saldo (R$)</label>
-                        <input type="number" step="0.01" name="valor_ind" class="modern-input" value="${jaPago ? '0.00' : p.saldo.toFixed(2)}" ${jaPago ? 'readonly' : ''}>
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Forma PG</label>
-                        <select name="forma_pg_ind" class="modern-input" ${jaPago ? 'disabled' : ''}>
-                            <option value="PIX">Pix</option>
-                            <option value="DINHEIRO">Dinheiro</option>
-                            <option value="CREDITO">Crédito</option>
-                            <option value="DEBITO">Débito</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    const passageiros = JSON.parse(passageirosJson);
+    const tbody = document.getElementById('lista-passageiros-checkin');
+    tbody.innerHTML = '';
+
+    passageiros.forEach(p => {
+        const row = `
+            <tr>
+                <td><input type="checkbox" name="ids_passageiros" value="${p.id_cr}" data-saldo="${p.saldo}" onchange="recalcularTotalCheckin()"></td>
+                <td>${p.nome}</td>
+                <td>${p.atividade}</td>
+                <td>R$ ${p.valor_cobrado.toFixed(2)}</td>
+                <td>R$ ${p.pago.toFixed(2)}</td>
+                <td style="font-weight: bold; color: #ef4444;">R$ ${p.saldo.toFixed(2)}</td>
+            </tr>
         `;
+        tbody.innerHTML += row;
     });
-    
-    // Reseta o toggle para grupo por padrão
-    document.getElementById('tipo_acerto').value = 'grupo';
-    alternarModoPagamento();
+
+    document.getElementById('input-valor-final').value = "0.00";
+    document.getElementById('modal-acerto').style.display = 'flex';
 }
+
+function recalcularTotalCheckin() {
+    let total = 0;
+    const checks = document.querySelectorAll('input[name="ids_passageiros"]:checked');
+    checks.forEach(c => {
+        total += parseFloat(c.getAttribute('data-saldo'));
+    });
+    document.getElementById('input-valor-final').value = total.toFixed(2);
+}
+
+function selecionarTodosPassageiros(source) {
+    const checkboxes = document.querySelectorAll('input[name="ids_passageiros"]');
+    for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = source.checked;
+    }
+    recalcularTotalCheckin();
+}
+
 
 function fecharModalAcerto() {
     document.getElementById('modal-acerto').style.display = 'none';

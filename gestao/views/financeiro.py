@@ -86,6 +86,7 @@ def _preparar_contexto_pagamentos(filtro_data):
             passageiros_json.append({
                 'id_cr': p.id,
                 'nome': p.cliente.nome,
+                'atividade': p.atividade.apelido,
                 'valor_cobrado': float(p.valor_cobrado),
                 'pago': float(ja_pago_total),
                 'saldo': float(p.valor_cobrado - ja_pago_total)

@@ -112,85 +112,40 @@ def processar_salvamento_reserva(dados_post):
 
 @transaction.atomic
 def processar_pagamentos_loja(dados_post):
-    """
-    Registra pagamentos avulsos para a reserva, identificando 
-    quem pagou e quem recebeu para clareza no extrato.
-    """
     reserva_id = dados_post.get("reserva_id")
-    tipo_pg = dados_post.get("tipo_acerto")
-    data_pg = dados_post.get("data_pagamento") or timezone.localtime(timezone.now()).strftime('%Y-%m-%d')
-    recebedor = dados_post.get("recebedor_pg", "LOJA")
-    pagador = dados_post.get("pagador_pg", "CLIENTE") # NOVO CAMPO AQUI!
+    ids_passageiros = dados_post.getlist("ids_passageiros")
+    valor_total = Decimal(dados_post.get("valor_total_pagamento").replace(',', '.'))
+    forma_pg = dados_post.get("forma_pg")
+    data_pg = dados_post.get("data_pagamento")
+    recebedor = dados_post.get("recebedor_pg")
+    pagador = dados_post.get("pagador_pg")
     
-    reserva = Reserva.objects.get(id=reserva_id)
-    
-    # ---------------------------------------------------------
-    # PAGAMENTO EM GRUPO (Tudo Junto)
-    # ---------------------------------------------------------
-    if tipo_pg == 'grupo':
-        v_bruto = dados_post.get("valor_grupo", "0")
-        valor_pago = Decimal(v_bruto.replace(',', '.') if v_bruto else '0')
-        forma_pg = dados_post.get("forma_pg_grupo")
-        primeiro_cliente = reserva.passageiros.first()
-        
-        # Define os textos baseados em quem pagou
-        desc_extrato = "Pagamento Avulso (Cliente)" if pagador == 'CLIENTE' else "Repasse (Vendedor)"
-        desc_caixa = f"PAGAMENTO: {primeiro_cliente.cliente.nome}".upper() if pagador == 'CLIENTE' else f"REPASSE VENDEDOR: {primeiro_cliente.cliente.nome}".upper()
-        
-        if valor_pago > 0:
-            p = Pagamento.objects.create(
-                cliente_reserva=primeiro_cliente,
-                valor=valor_pago,
-                forma_pg=forma_pg,
-                recebedor=recebedor,
-                descricao=desc_extrato
-            )
-            
-            if recebedor == 'LOJA':
-                Caixa.objects.create(
-                    data=data_pg,
-                    tipo='ENTRADA',
-                    descricao=desc_caixa,
-                    forma_pg=forma_pg,
-                    valor=valor_pago,
-                    pagamento_origem=p
-                )
-            
-    # ---------------------------------------------------------
-    # PAGAMENTO INDIVIDUAL (Separado)
-    # ---------------------------------------------------------
-    elif tipo_pg == 'individual':
-        ids_cr = dados_post.getlist("id_cr")
-        valores = dados_post.getlist("valor_ind")
-        formas = dados_post.getlist("forma_pg_ind")
-        
-        for i in range(len(ids_cr)):
-            v_bruto = valores[i] if i < len(valores) else "0"
-            valor = Decimal(v_bruto.replace(',', '.') if v_bruto else '0')
-            
-            if valor > 0:
-                cr = ClienteReserva.objects.get(id=ids_cr[i])
-                
-                desc_extrato = "Pagamento Individual (Cliente)" if pagador == 'CLIENTE' else "Repasse (Vendedor)"
-                desc_caixa = f"PAGAMENTO: {cr.cliente.nome}".upper() if pagador == 'CLIENTE' else f"REPASSE VENDEDOR: {cr.cliente.nome}".upper()
+    if valor_total <= 0 or not ids_passageiros:
+        return
 
-                p = Pagamento.objects.create(
-                    cliente_reserva=cr,
-                    valor=valor,
-                    forma_pg=formas[i],
-                    recebedor=recebedor,
-                    descricao=desc_extrato
-                )
-                
-                if recebedor == 'LOJA':
-                    Caixa.objects.create(
-                        data=data_pg,
-                        tipo='ENTRADA',
-                        descricao=desc_caixa,
-                        forma_pg=formas[i],
-                        valor=valor,
-                        pagamento_origem=p
-                    )
+    # Para fins de registo, usamos o primeiro passageiro selecionado como referência principal
+    cr_referencia = ClienteReserva.objects.get(id=ids_passageiros[0])
+    
+    desc_extrato = f"Pagamento Parcial ({pagador})"
+    desc_caixa = f"PAGAMENTO: {cr_referencia.cliente.nome} + {len(ids_passageiros)-1}".upper()
+
+    p = Pagamento.objects.create(
+        cliente_reserva=cr_referencia,
+        valor=valor_total,
+        forma_pg=forma_pg,
+        recebedor=recebedor,
+        descricao=desc_extrato
+    )
+    
+    if recebedor == 'LOJA':
+        Caixa.objects.create(
+            data=data_pg,
+            tipo='ENTRADA',
+            descricao=desc_caixa,
+            forma_pg=forma_pg,
+            valor=valor_total,
+            pagamento_origem=p
+        )
 
 
 @transaction.atomic
