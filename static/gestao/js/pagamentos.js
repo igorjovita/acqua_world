@@ -3,23 +3,27 @@ let historicoGlobal = [];
 function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor, historicoJson) {
     document.getElementById('modal-reserva-id').value = id;
     document.getElementById('modal-titulo-reserva').innerText = "Reserva: " + nome;
-    document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + vendedor;
+    document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + (vendedor || 'N/A');
     
-    // 1. Lida com o Histórico
-    const textoHistorico = historicoJson ? historicoJson : '[]';
-    historicoGlobal = JSON.parse(textoHistorico);
+    // Tenta ler o histórico sem deixar o sistema quebrar
+    try {
+        const textoHistorico = (historicoJson && historicoJson !== 'undefined') ? historicoJson : '[]';
+        historicoGlobal = JSON.parse(textoHistorico);
+    } catch (e) {
+        console.warn("Erro ao ler o histórico, assumindo vazio.");
+        historicoGlobal = [];
+    }
     
-    // 2. Lida com os Passageiros e renderiza a tabela de checkout
-    const passageiros = JSON.parse(passageirosJson);
-    renderizarTabelaPassageiros(passageiros);
+    // Renderiza a lista de check-in
+    try {
+        const passageiros = JSON.parse(passageirosJson);
+        renderizarTabelaPassageiros(passageiros);
+    } catch (e) {
+        console.error("Erro grave nos passageiros.");
+    }
     
-    // 3. Renderiza a tabela do histórico
     renderizarHistorico();
-    
-    // 4. Define a aba padrão ao abrir
     alternarAba('checkout');
-    
-    // 5. Mostra o modal
     document.getElementById('modal-acerto').style.display = 'flex';
 }
 

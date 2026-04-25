@@ -53,13 +53,7 @@
                             <span class="material-symbols-outlined">payments</span>
                         </button>
                     </td>
-                    <td style="text-align: center;">
-                        <button class="btn-acao-icone {% if res.status == 'PAGO' %}btn-desabilitado{% endif %}" 
-                                {% if res.status == 'PAGO' %}disabled{% endif %}
-                                onclick="abrirModalAcerto('{{ res.id }}', '{{ res.nome_exibicao }}', {{ res.valor_a_receber|stringformat:'f' }}, '{{ res.passageiros_json|escapejs }}')">
-                            <span class="material-symbols-outlined">payments</span>
-                        </button>
-                    </td>
+                    
                 </tr>
                 {% endfor %}
             </tbody>

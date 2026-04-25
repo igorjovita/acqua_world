@@ -26,17 +26,14 @@ def pagamentos(request):
 
 # --- FUNÇÃO AJUDANTE (Isolada da View Principal) ---
 def _preparar_contexto_pagamentos(filtro_data):
-    """ Regra de negócio para buscar e formatar os dados da tela de pagamentos """
-    
-    if filtro_data is None:
+    # BLINDAGEM 1: Se for None ou string vazia (""), ele SEMPRE joga a data padrão.
+    if not filtro_data: 
         agora = timezone.localtime(timezone.now()) 
         if agora.hour < 10:
             filtro_data = agora.strftime('%Y-%m-%d')
         else:
             amanha = agora + timedelta(days=1)
             filtro_data = amanha.strftime('%Y-%m-%d')
-    elif filtro_data == "":
-        filtro_data = None
 
     reservas_query = Reserva.objects.prefetch_related(
         'passageiros__cliente', 'passageiros__pagamentos'
@@ -60,27 +57,35 @@ def _preparar_contexto_pagamentos(filtro_data):
         pago_acqua = Decimal('0.00')
         
         passageiros_json = []
-        historico_pagamentos = [] # <-- A LISTA COMEÇA AQUI
+        historico_pagamentos = [] 
         
         for p in passageiros:
             total_reserva += p.valor_cobrado
             pagamentos_cliente = p.pagamentos.all()
             
             for pg in pagamentos_cliente:
-                # Soma os totais
                 if pg.recebedor == 'VENDEDOR':
                     pago_vendedor += pg.valor
                 else:
                     pago_acqua += pg.valor
                 
-                # ADICIONA NO HISTÓRICO PARA O MODAL VER
+                # BLINDAGEM 2: Tenta extrair a data sem dar erro 500 no servidor
+                data_pg_str = 'N/A'
+                try:
+                    if hasattr(pg, 'data') and pg.data:
+                        data_pg_str = pg.data.strftime('%d/%m/%Y')
+                    elif hasattr(pg, 'data_criacao') and pg.data_criacao:
+                        data_pg_str = pg.data_criacao.strftime('%d/%m/%Y')
+                except:
+                    pass
+                
                 historico_pagamentos.append({
                     'id': pg.id,
-                    'data': pg.data.strftime('%d/%m/%Y') if hasattr(pg, 'data') and pg.data else 'N/A', # Pega a data se existir no seu model
-                    'valor': float(pg.valor),
-                    'forma': pg.forma_pg,
-                    'recebedor': pg.recebedor,
-                    'pagador': getattr(pg, 'pagador', 'CLIENTE'), # Usa getattr para não dar erro se não tiver a coluna pagador
+                    'data': data_pg_str,
+                    'valor': float(pg.valor or 0),
+                    'forma': pg.forma_pg or 'N/A',
+                    'recebedor': pg.recebedor or 'LOJA',
+                    'pagador': getattr(pg, 'pagador', 'CLIENTE'), 
                     'passageiro': p.cliente.nome
                 })
             
@@ -97,7 +102,6 @@ def _preparar_contexto_pagamentos(filtro_data):
         valor_a_receber = total_reserva - (pago_vendedor + pago_acqua)
         status = "PAGO" if valor_a_receber <= 0 else "PENDENTE"
         
-        # O PULO DO GATO: Garantir que o historico_json está sendo enviado!
         dados_reservas.append({
             'id': r.id,
             'nome_exibicao': nome_exibicao,
@@ -108,9 +112,13 @@ def _preparar_contexto_pagamentos(filtro_data):
             'valor_a_receber': valor_a_receber,
             'status': status,
             'passageiros_json': json.dumps(passageiros_json),
-            'historico_json': json.dumps(historico_pagamentos) # <-- TEM QUE TER ESSA LINHA
+            'historico_json': json.dumps(historico_pagamentos)
         })
 
+    return {
+        'reservas': dados_reservas,
+        'filtro_data': filtro_data
+    }
 
 
 def caixa(request):
