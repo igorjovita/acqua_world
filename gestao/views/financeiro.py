@@ -21,8 +21,12 @@ def pagamentos(request):
     filtro_data = request.GET.get('data')
     context = _preparar_contexto_pagamentos(filtro_data)
     
-    return render(request, 'pagamentos.html', context)
-
+    # Detecção de Dispositivo
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    is_mobile = any(device in user_agent for device in ['iphone', 'android', 'mobile'])
+    
+    template = 'pagamentos_mobile.html' if is_mobile else 'pagamentos.html'
+    return render(request, template, context)
 
 # --- FUNÇÃO AJUDANTE (Isolada da View Principal) ---
 def _preparar_contexto_pagamentos(filtro_data):

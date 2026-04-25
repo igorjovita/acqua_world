@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acqua World - Caixa</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f1f5f9; margin: 0; padding: 0; height: 100vh; overflow: hidden;
+        }
+
+        /* HEADER E BUSCA */
+        header {
+            background: #091521; color: white; padding: 15px;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .busca-data { display: flex; gap: 8px; }
+        .busca-data input { padding: 10px; border-radius: 8px; border: none; outline: none; flex: 1; font-size: 14px; }
+        .busca-data button { background: #0ea5e9; color: white; border: none; border-radius: 8px; padding: 0 15px; font-weight: bold; }
+
+        /* ÁREA PRINCIPAL */
+        main {
+            position: absolute; top: 110px; bottom: 70px; width: 100%;
+            overflow-y: auto; padding: 15px;
+        }
+
+        /* CARDS DE RESERVA */
+        .reserva-card {
+            background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px;
+            border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .card-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .cliente-nome { font-size: 16px; font-weight: bold; color: #0f172a; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .badge-pendente { background: #fee2e2; color: #ef4444; }
+        .badge-pago { background: #dcfce7; color: #166534; }
+        
+        .card-info { font-size: 13px; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .valor-destaque { font-size: 18px; font-weight: bold; color: #ef4444; }
+        .valor-zerado { color: #166534; }
+
+        .btn-acao {
+            width: 100%; background: #0f172a; color: white; border: none; padding: 12px;
+            border-radius: 8px; font-weight: bold; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-acao:disabled { background: #cbd5e1; color: #94a3b8; }
+
+        /* MODAL FULLSCREEN */
+        .modal-mobile {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 2000; flex-direction: column; animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-header { background: #091521; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-fechar { background: transparent; border: none; color: white; font-size: 24px; padding: 0; }
+        
+        /* ABAS DO MODAL */
+        .modal-tabs { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+        .tab-btn { flex: 1; padding: 15px 0; border: none; background: transparent; font-weight: bold; color: #64748b; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+        
+        .modal-body { flex: 1; overflow-y: auto; padding: 15px; background: #f1f5f9; }
+        .aba-content { display: none; }
+        .aba-content.ativo { display: block; }
+
+        /* LISTA DE CHECKIN (CHECKOUT) */
+        .item-passageiro { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+        .item-passageiro input[type="checkbox"] { width: 20px; height: 20px; }
+        .pass-info { flex: 1; }
+        .pass-nome { font-weight: bold; color: #0f172a; font-size: 14px; }
+        .pass-ativ { font-size: 11px; color: #64748b; }
+        .pass-saldo { font-weight: bold; color: #ef4444; font-size: 14px; text-align: right; }
+
+        /* LISTA DE HISTÓRICO */
+        .item-historico { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #0ea5e9; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .hist-linha { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .hist-data { font-size: 12px; color: #64748b; font-weight: bold; }
+        .hist-valor { font-weight: bold; color: #059669; }
+
+        /* FOOTER DE PAGAMENTO */
+        .modal-footer { padding: 15px; background: white; border-top: 1px solid #e2e8f0; }
+        .modern-input-modal { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 14px; margin-bottom: 10px; }
+        label { font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; display: block; }
+        .btn-confirmar { width: 100%; background: #22c55e; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; }
+
+        /* TAB BAR BOTTOM */
+        .tab-bar {
+            position: fixed; bottom: 0; width: 100%; height: 70px;
+            background: white; border-top: 1px solid #e2e8f0;
+            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+        }
+        .tab-item { text-decoration: none; color: #94a3b8; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 500; }
+        .tab-item.active { color: #0ea5e9; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <span style="font-weight: bold; letter-spacing: 1px; font-size: 18px;">CAIXA & CHECK-IN</span>
+        </div>
+        <form method="GET" class="busca-data">
+            <input type="date" name="data" value="{{ filtro_data }}">
+            <button type="submit">Buscar</button>
+        </form>
+    </header>
+
+    <main>
+        {% for res in reservas %}
+        <div class="reserva-card">
+            <div class="card-topo">
+                <span class="cliente-nome">{{ res.nome_exibicao|upper }}</span>
+                <span class="badge {% if res.status == 'PAGO' %}badge-pago{% else %}badge-pendente{% endif %}">
+                    {{ res.status }}
+                </span>
+            </div>
+            
+            <div class="card-info">
+                <span>Vendedor:</span>
+                <strong style="color: #334155;">{{ res.vendedor }}</strong>
+            </div>
+            <div class="card-info">
+                <span>Total da Reserva:</span>
+                <span>R$ {{ res.total_reserva|floatformat:2 }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                <span style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">A Receber:</span>
+                <span class="valor-destaque {% if res.valor_a_receber <= 0 %}valor-zerado{% endif %}">
+                    R$ {{ res.valor_a_receber|floatformat:2 }}
+                </span>
+            </div>
+
+            <button class="btn-acao" 
+                    {% if res.status == 'PAGO' %}disabled{% endif %}
+                    onclick="abrirModalAcertoMobile('{{ res.id }}', '{{ res.nome_exibicao }}', '{{ res.passageiros_json|escapejs }}', '{{ res.historico_json|escapejs }}')">
+                <span class="material-symbols-outlined">payments</span> 
+                {% if res.status == 'PAGO' %}Liquidado{% else %}Fazer Acerto{% endif %}
+            </button>
+        </div>
+        {% empty %}
+        <div style="text-align: center; color: #94a3b8; padding: 40px 20px;">
+            <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.5;">search_off</span>
+            <h3>Nenhum acerto para esta data</h3>
+        </div>
+        {% endfor %}
+    </main>
+
+    <div class="modal-mobile" id="modal-acerto-mobile">
+        <div class="modal-header">
+            <div style="line-height: 1.2;">
+                <span style="font-size: 12px; color: #cbd5e1;">Reserva</span><br>
+                <strong id="modal-titulo" style="font-size: 18px;">Nome</strong>
+            </div>
+            <button class="btn-fechar" onclick="fecharModalAcertoMobile()"><span class="material-symbols-outlined">close</span></button>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="tab-btn active" id="btn-tab-checkout" onclick="alternarAbaMobile('checkout')">Pagar Agora</button>
+            <button class="tab-btn" id="btn-tab-historico" onclick="alternarAbaMobile('historico')">Histórico</button>
+        </div>
+
+        <form method="POST" action="{% url 'pagamentos' %}" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            {% csrf_token %}
+            <input type="hidden" name="reserva_id" id="modal-reserva-id">
+            
+            <div class="modal-body">
+                <div id="aba-checkout" class="aba-content ativo">
+                    <label style="margin-bottom: 10px;">1. Quem está pagando?</label>
+                    <div id="lista-passageiros-mobile">
+                        </div>
+                </div>
+
+                <div id="aba-historico" class="aba-content">
+                    <div id="lista-historico-mobile">
+                        </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" id="footer-inputs-pagamento">
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Data</label>
+                        <input type="date" name="data_pagamento" class="modern-input-modal" value="{% now 'Y-m-d' %}" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Valor (R$)</label>
+                        <input type="number" step="0.01" name="valor_total_pagamento" id="input-valor-final-mobile" class="modern-input-modal" style="font-weight: bold; color: #0f172a;" required>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Forma</label>
+                        <select name="forma_pg" class="modern-input-modal" required>
+                            <option value="PIX">Pix</option>
+                            <option value="DINHEIRO">Dinheiro</option>
+                            <option value="CREDITO">Crédito</option>
+                            <option value="DEBITO">Débito</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Destino</label>
+                        <select name="recebedor_pg" class="modern-input-modal">
+                            <option value="LOJA">Loja</option>
+                            <option value="VENDEDOR">Vendedor</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="pagador_pg" value="CLIENTE">
+
+                <button type="submit" class="btn-confirmar">Confirmar Recebimento</button>
+            </div>
+        </form>
+    </div>
+
+    <nav class="tab-bar">
+        <a href="{% url 'homepage_mobile' %}" class="tab-item">
+            <span class="material-symbols-outlined">monitoring</span>Central
+        </a>
+        <a href="{% url 'sales' %}" class="tab-item">
+            <span class="material-symbols-outlined" style="font-size: 35px; color: #0ea5e9;">add_circle</span>Novo
+        </a>
+        <a href="{% url 'pagamentos' %}" class="tab-item active">
+            <span class="material-symbols-outlined">payments</span>Caixa
+        </a>
+    </nav>
+
+    <script>
+        let historicoMobile = [];
+
+        function abrirModalAcertoMobile(id, nome, passageirosJson, historicoJson) {
+            document.getElementById('modal-reserva-id').value = id;
+            document.getElementById('modal-titulo').innerText = nome.toUpperCase();
+            
+            // Histórico
+            try {
+                const txt = (historicoJson && historicoJson !== 'undefined') ? historicoJson : '[]';
+                historicoMobile = JSON.parse(txt);
+            } catch (e) { historicoMobile = []; }
+            
+            // Passageiros
+            try {
+                const passageiros = JSON.parse(passageirosJson);
+                const listaDiv = document.getElementById('lista-passageiros-mobile');
+                listaDiv.innerHTML = '';
+                
+                passageiros.forEach(p => {
+                    listaDiv.innerHTML += `
+                        <label class="item-passageiro">
+                            <input type="checkbox" name="ids_passageiros" value="${p.id_cr}" data-saldo="${p.saldo}" onchange="recalcularMobile()">
+                            <div class="pass-info">
+                                <div class="pass-nome">${p.nome}</div>
+                                <div class="pass-ativ">${p.atividade || 'N/A'}</div>
+                            </div>
+                            <div class="pass-saldo">
+                                R$ ${p.saldo.toFixed(2)}
+                            </div>
+                        </label>
+                    `;
+                });
+            } catch (e) {}
+
+            document.getElementById('input-valor-final-mobile').value = "0.00";
+            alternarAbaMobile('checkout');
+            document.getElementById('modal-acerto-mobile').style.display = 'flex';
+        }
+
+        function fecharModalAcertoMobile() {
+            document.getElementById('modal-acerto-mobile').style.display = 'none';
+        }
+
+        function recalcularMobile() {
+            let total = 0;
+            document.querySelectorAll('input[name="ids_passageiros"]:checked').forEach(c => {
+                total += parseFloat(c.getAttribute('data-saldo'));
+            });
+            document.getElementById('input-valor-final-mobile').value = total.toFixed(2);
+        }
+
+        function alternarAbaMobile(aba) {
+            const checkout = document.getElementById('aba-checkout');
+            const historico = document.getElementById('aba-historico');
+            const footerPagamento = document.getElementById('footer-inputs-pagamento');
+            const btnCheck = document.getElementById('btn-tab-checkout');
+            const btnHist = document.getElementById('btn-tab-historico');
+
+            if (aba === 'checkout') {
+                checkout.style.display = 'block';
+                historico.style.display = 'none';
+                footerPagamento.style.display = 'block';
+                btnCheck.classList.add('active');
+                btnHist.classList.remove('active');
+            } else {
+                checkout.style.display = 'none';
+                historico.style.display = 'block';
+                footerPagamento.style.display = 'none'; // Esconde os botões de pagar no histórico
+                btnCheck.classList.remove('active');
+                btnHist.classList.add('active');
+                renderizarHistoricoMobile();
+            }
+        }
+
+        function renderizarHistoricoMobile() {
+            const lista = document.getElementById('lista-historico-mobile');
+            lista.innerHTML = '';
+
+            if (historicoMobile.length === 0) {
+                lista.innerHTML = '<div style="text-align:center; padding: 30px; color:#94a3b8;">Nenhum histórico registrado.</div>';
+                return;
+            }
+
+            historicoMobile.forEach(pg => {
+                const corRec = pg.recebedor === 'LOJA' ? '#166534' : '#854d0e';
+                const bgRec = pg.recebedor === 'LOJA' ? '#dcfce7' : '#fef9c3';
+
+                lista.innerHTML += `
+                    <div class="item-historico">
+                        <div class="hist-linha">
+                            <span class="hist-data">${pg.data || 'N/A'}</span>
+                            <span class="hist-valor">R$ ${pg.valor.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #0f172a; margin-bottom: 8px;">${pg.passageiro || 'Grupo'}</div>
+                        <div style="display: flex; gap: 5px;">
+                            <span style="font-size: 10px; background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 4px; font-weight: bold;">Por: ${pg.pagador || 'CLIENTE'}</span>
+                            <span style="font-size: 10px; background: ${bgRec}; color: ${corRec}; padding: 3px 8px; border-radius: 4px; font-weight: bold;">Para: ${pg.recebedor}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
