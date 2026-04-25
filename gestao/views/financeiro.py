@@ -72,10 +72,10 @@ def _preparar_contexto_pagamentos(filtro_data):
                 # BLINDAGEM 2: Tenta extrair a data sem dar erro 500 no servidor
                 data_pg_str = 'N/A'
                 try:
-                    if hasattr(pg, 'data') and pg.data:
+                    if hasattr(pg, 'data_pagamento') and pg.data_pagamento:
+                        data_pg_str = pg.data_pagamento.strftime('%d/%m/%Y')
+                    elif hasattr(pg, 'data') and pg.data: # Fallback de segurança
                         data_pg_str = pg.data.strftime('%d/%m/%Y')
-                    elif hasattr(pg, 'data_criacao') and pg.data_criacao:
-                        data_pg_str = pg.data_criacao.strftime('%d/%m/%Y')
                 except:
                     pass
                 

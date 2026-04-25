@@ -65,7 +65,7 @@ function renderizarHistorico() {
 
     historicoGlobal.forEach(pg => {
         const row = `
-            <tr>
+            <tr style="text-align:center;>
                 <td>${pg.data || 'N/A'}</td>
                 <td>${pg.passageiro || 'Grupo'}</td>
                 <td style="font-weight: 600;">R$ ${pg.valor.toFixed(2)}</td>

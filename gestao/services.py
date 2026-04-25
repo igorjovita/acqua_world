@@ -134,7 +134,8 @@ def processar_pagamentos_loja(dados_post):
         valor=valor_total,
         forma_pg=forma_pg,
         recebedor=recebedor,
-        descricao=desc_extrato
+        descricao=desc_extrato,
+        data_pagamento=data_pg,
     )
     
     if recebedor == 'LOJA':
