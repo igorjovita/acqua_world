@@ -5,8 +5,8 @@ function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor, historicoJ
     document.getElementById('modal-titulo-reserva').innerText = "Reserva: " + nome;
     document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + vendedor;
     
-    // Armazena o histórico para uso posterior
-    historicoGlobal = JSON.parse(historicoJson);
+    const textoHistorico = historicoJson ? historicoJson : '[]';
+    historicoGlobal = JSON.parse(textoHistorico);
     
     // Renderiza a lista de check-in (passageiros)
     const passageiros = JSON.parse(passageirosJson);
