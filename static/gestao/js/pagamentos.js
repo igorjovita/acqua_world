@@ -59,18 +59,31 @@ function renderizarHistorico() {
     tbody.innerHTML = '';
 
     if (historicoGlobal.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Nenhum pagamento registrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #94a3b8; font-weight: 500;">Nenhum pagamento registrado no extrato.</td></tr>';
         return;
     }
 
     historicoGlobal.forEach(pg => {
+        // Cores diferentes para saber se o dinheiro está com o vendedor ou com a loja
+        const corRecebedor = pg.recebedor === 'LOJA' 
+            ? 'background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;' // Verde claro pra Loja
+            : 'background: #fef9c3; color: #854d0e; border: 1px solid #fef08a;'; // Amarelo pro Vendedor
+
         const row = `
-            <tr style="text-align:center;>
-                <td>${pg.data || 'N/A'}</td>
-                <td>${pg.passageiro || 'Grupo'}</td>
-                <td style="font-weight: 600;">R$ ${pg.valor.toFixed(2)}</td>
-                <td><span class="badge-mini">${pg.pagador || 'CLIENTE'}</span></td>
-                <td><span class="badge-mini">${pg.recebedor || 'N/A'}</span></td>
+            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                <td style="padding: 12px; text-align: center; color: #64748b;">${pg.data || 'N/A'}</td>
+                <td style="padding: 12px; text-align: left; font-weight: 500; color: #0f172a;">${pg.passageiro || 'Grupo'}</td>
+                <td style="padding: 12px; text-align: center; font-weight: 600; color: #059669;">R$ ${pg.valor.toFixed(2)}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                        ${pg.pagador || 'CLIENTE'}
+                    </span>
+                </td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="${corRecebedor} padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                        ${pg.recebedor || 'N/A'}
+                    </span>
+                </td>
             </tr>
         `;
         tbody.innerHTML += row;
