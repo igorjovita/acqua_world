@@ -19,8 +19,8 @@ urlpatterns = [
     path('caixa/', caixa, name='caixa'),
     path('print-caixa/', print_caixa, name='print_caixa'),
 
-    path('cadastrar-atividade/', cadastrar_atividade_rapida, name='cadastrar_atividade'),
-    path('cadastrar-vendedor/', cadastrar_vendedor_rapido, name='cadastrar_vendedor'),
+    path('cadastrar-atividade/', cadastrar_atividade, name='cadastrar_atividade'),
+    path('cadastrar-vendedor/', cadastrar_vendedor, name='cadastrar_vendedor'),
 
 
     # --- ROTAS TEMPORÁRIAS ---
