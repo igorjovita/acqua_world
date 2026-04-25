@@ -70,7 +70,7 @@
                                 style="background-color: #fef08a !important;"
                             {% endif %}
                         >
-                            {{ op.cliente.nome }}
+                            {{ op.cliente.nome|upper }}
                         </td>
                         <td>{{ op.cliente.telefone|default:"-" }}</td>
                         <td>{{ op.reserva.vendedor.nome }}</td>
