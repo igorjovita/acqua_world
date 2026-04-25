@@ -81,6 +81,32 @@
                     </div>
                 </div>
 
+                <div class="tabs-pagamento" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                    <button type="button" class="tab-btn active" id="btn-tab-checkout" onclick="alternarAba('checkout')">Novo Pagamento</button>
+                    <button type="button" class="tab-btn" id="btn-tab-historico" onclick="alternarAba('historico')">Ver Histórico</button>
+                </div>
+
+                <div id="aba-checkout" class="aba-content ativo">
+                    </div>
+
+                <div id="aba-historico" class="aba-content" style="display: none;">
+                    <div class="historico-container" style="max-height: 300px; overflow-y: auto;">
+                        <table class="operacao-table" style="font-size: 12px; width: 100%;">
+                            <thead style="background: #f1f5f9; position: sticky; top: 0;">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Cliente</th>
+                                    <th>Valor</th>
+                                    <th>Pagador</th>
+                                    <th>Recebedor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-historico-pagamentos">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="tabela-checkout-container" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                     <table class="operacao-table" style="font-size: 13px;">
                         <thead style="background: #f8fafc;">

@@ -1,28 +1,68 @@
-function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor) {
+let historicoGlobal = [];
+
+function abrirModalAcerto(id, nome, saldo, passageirosJson, vendedor, historicoJson) {
     document.getElementById('modal-reserva-id').value = id;
     document.getElementById('modal-titulo-reserva').innerText = "Reserva: " + nome;
     document.getElementById('modal-vendedor-reserva').innerText = "Vendedor: " + vendedor;
     
+    // Armazena o histórico para uso posterior
+    historicoGlobal = JSON.parse(historicoJson);
+    
+    // Renderiza a lista de check-in (passageiros)
     const passageiros = JSON.parse(passageirosJson);
-    const tbody = document.getElementById('lista-passageiros-checkin');
+    renderizarTabelaPassageiros(passageiros);
+    
+    // Limpa e prepara a aba de histórico
+    renderizarHistorico();
+    
+    // Reset para a aba de checkout ao abrir
+    alternarAba('checkout');
+    
+    document.getElementById('modal-acerto').style.display = 'flex';
+}
+
+
+function renderizarHistorico() {
+    const tbody = document.getElementById('lista-historico-pagamentos');
     tbody.innerHTML = '';
 
-    passageiros.forEach(p => {
+    if (historicoGlobal.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Nenhum pagamento registrado.</td></tr>';
+        return;
+    }
+
+    historicoGlobal.forEach(pg => {
         const row = `
             <tr>
-                <td><input type="checkbox" name="ids_passageiros" value="${p.id_cr}" data-saldo="${p.saldo}" onchange="recalcularTotalCheckin()"></td>
-                <td>${p.nome}</td>
-                <td>${p.atividade}</td>
-                <td>R$ ${p.valor_cobrado.toFixed(2)}</td>
-                <td>R$ ${p.pago.toFixed(2)}</td>
-                <td style="font-weight: bold; color: #ef4444;">R$ ${p.saldo.toFixed(2)}</td>
+                <td>${pg.data || 'N/A'}</td>
+                <td>${pg.passageiro}</td>
+                <td style="font-weight: 600;">R$ ${pg.valor.toFixed(2)}</td>
+                <td><span class="badge-mini">${pg.pagador || 'CLIENTE'}</span></td>
+                <td><span class="badge-mini">${pg.recebedor}</span></td>
             </tr>
         `;
         tbody.innerHTML += row;
     });
+}
 
-    document.getElementById('input-valor-final').value = "0.00";
-    document.getElementById('modal-acerto').style.display = 'flex';
+function alternarAba(aba) {
+    const checkout = document.getElementById('aba-checkout');
+    const historico = document.getElementById('aba-historico');
+    const btnCheckout = document.getElementById('btn-tab-checkout');
+    const btnHistorico = document.getElementById('btn-tab-historico');
+
+    if (aba === 'checkout') {
+        checkout.style.display = 'block';
+        historico.style.display = 'none';
+        btnCheckout.classList.add('active');
+        btnHistorico.classList.remove('active');
+    } else {
+        checkout.style.display = 'none';
+        historico.style.display = 'block';
+        btnCheckout.classList.remove('active');
+        btnHistorico.classList.add('active');
+        renderizarHistorico();
+    }
 }
 
 function recalcularTotalCheckin() {

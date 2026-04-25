@@ -78,6 +78,7 @@ def _preparar_contexto_pagamentos(filtro_data):
                     'valor': float(pg.valor),
                     'forma': pg.forma_pg,
                     'recebedor': pg.recebedor,
+                    'pagador': pg.pagador if hasattr(pg, 'pagador') else 'CLIENTE',
                     'descricao': pg.descricao,
                     'passageiro': p.cliente.nome
                 })
