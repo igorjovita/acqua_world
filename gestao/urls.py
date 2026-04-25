@@ -2,7 +2,7 @@ from django.urls import path
 from gestao.views.operacoes import homepage, sales, print_planilha
 from gestao.views.financeiro import pagamentos, caixa, print_caixa
 from gestao.views.comissoes import comissoes, print_comissoes
-from gestao.views.cadastros import cadastrar_atividade_rapida, cadastrar_vendedor_rapido
+from gestao.views.cadastros import cadastrar_atividade, cadastrar_vendedor
 
 urlpatterns = [
     # Rota principal
