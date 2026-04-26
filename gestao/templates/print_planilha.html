@@ -70,12 +70,15 @@
                                 style="background-color: #fef08a !important;"
                             {% endif %}
                         >
-                            <span>{{ op.cliente.nome|upper }}</span>
-                            {% if op.observacao %}
-                                <span style="display: block; font-size: 8pt; font-weight: normal; font-style: italic; margin-top: 3px; color: #333;">
-                                    * Obs: {{ op.observacao|upper }}
-                                </span>
-                            {% endif %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;">
+                                <span style="white-space: nowrap;">{{ op.cliente.nome|upper }}</span>
+                                
+                                {% if op.observacao %}
+                                    <span style="font-size: 8pt; font-weight: normal; font-style: italic; color: #444; white-space: nowrap; text-align: right;">
+                                        * {{ op.observacao|upper }}
+                                    </span>
+                                {% endif %}
+                            </div>
                         </td>
                         <td>{{ op.cliente.telefone|default:"-" }}</td>
                         <td>{{ op.reserva.vendedor.nome }}</td>
