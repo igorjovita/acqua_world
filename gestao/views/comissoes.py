@@ -85,7 +85,7 @@ def _preparar_contexto_comissoes(dados_get):
         for cr in crs_pendentes:
             sigla = cr.atividade.apelido
             contagem[sigla] = contagem.get(sigla, 0) + 1
-            sub_neto += cr.neto_atividade
+            sub_neto += cr.neto_praticado
             sub_acqua += cr.recebido_loja
             sub_vend += cr.retido_vendedor
             ids_linha.append(str(cr.id))
@@ -169,7 +169,7 @@ def print_comissoes(request):
             sigla = cr.atividade.apelido
             contagem[sigla] = contagem.get(sigla, 0) + 1
             sub_total += cr.valor_cobrado
-            sub_neto += cr.neto_atividade
+            sub_neto += cr.neto_praticado
             sub_acqua += cr.recebido_loja
             sub_vend += cr.retido_vendedor
 

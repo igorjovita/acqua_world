@@ -174,7 +174,7 @@ def processar_acerto_comissao(dados_post):
         return
         
     # Automação de Caixa (se saldo != 0)
-    saldo_total = sum((o.neto_atividade - o.recebido_loja) for o in objetos)
+    saldo_total = sum((o.neto_praticado - o.recebido_loja) for o in objetos)
     
     if saldo_total != 0:
         v_nome = objetos.first().reserva.vendedor.nome
