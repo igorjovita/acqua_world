@@ -190,6 +190,10 @@ quantidadeClientes.addEventListener('input', function () {
                         </div>
                     </div>
                 </div>
+                <div class="inputs field-group" style="flex: 100%; margin-top: 10px;">
+                    <label>Observação Interna (Aparece na Planilha):</label>
+                    <input type="text" name="observacao" id="obs-${i}" class="modern-input" placeholder="Ex: Fala inglês, Pedido de casamento, etc..." value="${dados ? dados.observacao || '' : ''}">
+                </div>
             </div>
         `;
 
@@ -233,7 +237,7 @@ quantidadeClientes.addEventListener('input', function () {
             document.getElementById(`altura-${i}`).value = memoriaClientes[i].altura;
             document.getElementById(`atividade-${i}`).value = memoriaClientes[i].atividade;
             document.getElementById(`valor-${i}`).value = memoriaClientes[i].valor;
-            
+            document.getElementById(`obs-${i}`).value = memoriaClientes[i].observacao || '';
             const selectSinal = document.getElementById(`tem-sinal-${i}`);
             selectSinal.value = memoriaClientes[i].temSinal;
             if (memoriaClientes[i].temSinal === 'sim') {
@@ -273,7 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 temSinal: cli.tem_sinal,
                 valorSinal: cli.valor_sinal,
                 formaPgSinal: cli.forma_pg_sinal,
-                recebedorSinal: cli.recebedor_sinal
+                recebedorSinal: cli.recebedor_sinal,
+                observacao: cli.observacao || ''
             };
         });
 

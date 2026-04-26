@@ -70,7 +70,12 @@
                                 style="background-color: #fef08a !important;"
                             {% endif %}
                         >
-                            {{ op.cliente.nome|upper }}
+                            <span>{{ op.cliente.nome|upper }}</span>
+                            {% if op.observacao %}
+                                <span style="display: block; font-size: 8pt; font-weight: normal; font-style: italic; margin-top: 3px; color: #333;">
+                                    * Obs: {{ op.observacao|upper }}
+                                </span>
+                            {% endif %}
                         </td>
                         <td>{{ op.cliente.telefone|default:"-" }}</td>
                         <td>{{ op.reserva.vendedor.nome }}</td>

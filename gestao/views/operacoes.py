@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -212,3 +213,8 @@ def print_planilha(request):
         'data_obj': data_obj,
     }
     return render(request, 'print_planilha.html', context)
+
+
+def ping_render(request):
+    """ View super leve só para manter o Render acordado """
+    return HttpResponse("Estou acordado!")
