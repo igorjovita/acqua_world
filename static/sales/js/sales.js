@@ -192,7 +192,7 @@ quantidadeClientes.addEventListener('input', function () {
                 </div>
                 <div class="inputs field-group" style="flex: 100%; margin-top: 10px;">
                     <label>Observação Interna (Aparece na Planilha):</label>
-                    <input type="text" name="observacao" id="obs-${i}" class="modern-input" placeholder="Ex: Fala inglês, Pedido de casamento, etc..." value="${dados ? dados.observacao || '' : ''}">
+                    <input type="text" name="observacao" id="obs-${i}" class="modern-input">
                 </div>
             </div>
         `;
