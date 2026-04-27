@@ -253,7 +253,7 @@
             </div>
             <div class="inputs field-group" style="flex: 100%; margin-top: 10px;">
                 <label>Observação Interna (Aparece na Planilha):</label>
-                <input type="text" name="observacao" id="obs-${i}" class="modern-input" >
+                <input type="text" name="observacao" id="obs-${id}" class="modern-input" value="${dados && dados.observacao ? dados.observacao : ''}" placeholder="Ex: Fala inglês, Pedido casamento...">
             </div>
             <div class="field-group" style="display: flex; align-items: center; margin-top: -5px; margin-bottom: 10px;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569; font-weight: 500; font-size: 14px;">
