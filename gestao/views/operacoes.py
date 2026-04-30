@@ -106,7 +106,6 @@ def sales(request):
     # 1. PROCESSAMENTO DA VENDA (POST)
     # ==========================================
     if request.method == "POST":
-        # Passamos todo o trabalho sujo para a camada de serviços
         processar_salvamento_reserva(request.POST)
         return redirect('homepage')
 

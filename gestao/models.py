@@ -99,6 +99,8 @@ class ClienteReserva(models.Model):
     acerto_liquidado = models.BooleanField(default=False)
     data_acerto = models.DateField(null=True, blank=True) 
     forma_pg_acerto = models.CharField(max_length=50, null=True, blank=True)
+    numero_pratica = models.IntegerField(default=1, verbose_name="Número da Prática")
+    is_cortesia = models.BooleanField(default=False, verbose_name="É Cortesia?")
 
     status_checkin = models.CharField(
         max_length=15, 

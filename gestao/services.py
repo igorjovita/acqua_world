@@ -4,6 +4,10 @@ from decimal import Decimal
 from django.utils import timezone
 from .models import Reserva, Vendedor, Cliente, Atividade, ClienteReserva, Pagamento, Caixa
 
+from decimal import Decimal
+from django.db import transaction
+# Não esqueça de importar seus modelos no topo do arquivo!
+
 @transaction.atomic
 def processar_salvamento_reserva(dados_post):
     """
@@ -15,7 +19,7 @@ def processar_salvamento_reserva(dados_post):
     vendedor = Vendedor.objects.get(id=vendedor_id) if vendedor_id else None
     data_reserva = dados_post.get('data')
 
-    # 1. Cria ou Atualiza a Reserva
+    # 1. Cria ou Atualiza a Reserva Principal (Capa)
     if reserva_id_edicao:
         reserva = Reserva.objects.get(id=reserva_id_edicao)
         reserva.data = data_reserva
@@ -24,7 +28,7 @@ def processar_salvamento_reserva(dados_post):
     else:
         reserva = Reserva.objects.create(data=data_reserva, vendedor=vendedor)
 
-    # 2. Captura todas as listas enviadas pelo HTML
+    # 2. Captura todas as listas enviadas pelo HTML (Incluindo as Novas)
     cr_ids = dados_post.getlist("cr_id")
     nomes = dados_post.getlist("nome")
     telefones = dados_post.getlist("telefone")
@@ -34,7 +38,6 @@ def processar_salvamento_reserva(dados_post):
     atividades_ids = dados_post.getlist("atividade")
     valores = dados_post.getlist("valor")
     observacoes = dados_post.getlist("observacao")
-
     status_checkins = dados_post.getlist("status_checkin")
     
     tem_sinais = dados_post.getlist("tem_sinal")
@@ -42,7 +45,13 @@ def processar_salvamento_reserva(dados_post):
     formas_pg_sinal = dados_post.getlist("forma_pg_sinal")
     recebedores_sinal = dados_post.getlist("recebedor_sinal")
 
-    # Gestão de remoção na edição (Deleta quem foi tirado da tela)
+    # ==========================================
+    # NOVIDADE: CAPTURANDO AS NOVAS LISTAS DO JS
+    # ==========================================
+    is_cortesias = dados_post.getlist("isCortesia")
+    datas_pratica2 = dados_post.getlist("dataPratica2")
+
+    # Gestão de remoção na edição
     if reserva_id_edicao:
         ids_recebidos = [int(i) for i in cr_ids if i.strip()]
         reserva.passageiros.exclude(id__in=ids_recebidos).delete()
@@ -56,12 +65,17 @@ def processar_salvamento_reserva(dados_post):
         
         obs_c = observacoes[i] if i < len(observacoes) else ""
         
+        # Puxa os dados novos, protegendo caso venham vazios
+        cortesia_c = is_cortesias[i] if i < len(is_cortesias) else "nao"
+        data_p2_c = datas_pratica2[i] if i < len(datas_pratica2) else ""
+        is_cortesia_bool = (cortesia_c == 'sim')
+        
         cliente, _ = Cliente.objects.get_or_create(
             documento=doc_final,
             defaults={'nome': nomes[i]}
         )
         
-        # Atualiza dados do cliente sempre (caso a pessoa tenha corrigido o nome ou preenchido peso)
+        # Atualiza dados do cliente
         cliente.nome = nomes[i]
         if i < len(telefones): cliente.telefone = telefones[i]
         if i < len(pesos) and pesos[i]: cliente.peso = Decimal(pesos[i].replace(',', '.'))
@@ -75,7 +89,7 @@ def processar_salvamento_reserva(dados_post):
         cr_id_atual = cr_ids[i] if i < len(cr_ids) else ""
         status_c = status_checkins[i] if i < len(status_checkins) else ""
         
-        # Cria ou Atualiza o ClienteReserva
+        # Cria ou Atualiza o ClienteReserva (Dia 1 - Prática 1)
         if cr_id_atual.strip():
             cr = ClienteReserva.objects.get(id=int(cr_id_atual))
             cr.cliente = cliente
@@ -83,7 +97,9 @@ def processar_salvamento_reserva(dados_post):
             cr.valor_cobrado = valor_c
             cr.status_checkin = status_c
             cr.observacao = obs_c
-            cr.save() # A comissão já é calculada automaticamente lá no models.py!
+            cr.numero_pratica = 1 # Garante que o Dia 1 é a Prática 1
+            cr.is_cortesia = is_cortesia_bool
+            cr.save() 
         else:
             cr = ClienteReserva.objects.create(
                 reserva=reserva,
@@ -91,12 +107,37 @@ def processar_salvamento_reserva(dados_post):
                 atividade=atividade,
                 valor_cobrado=valor_c,
                 status_checkin=status_c,
-                observacao=obs_c
-
+                observacao=obs_c,
+                numero_pratica=1, # Nasce como Prática 1
+                is_cortesia=is_cortesia_bool
             )
 
-        # 4. PAGAMENTOS (SINAL E CAIXA)
-        # Limpa sinais antigos se for edição para evitar duplicidade de valores
+        # ==========================================
+        # A MÁGICA: CRIAÇÃO DA PRÁTICA 2 (Espelho)
+        # ==========================================
+        if data_p2_c.strip():
+            # 1. Pega ou cria uma Reserva para a data do Dia 2
+            reserva_dia_2, _ = Reserva.objects.get_or_create(
+                data=data_p2_c,
+                vendedor=vendedor
+            )
+            
+            # 2. Cria o Passageiro no Dia 2. 
+            # O 'get_or_create' impede que o sistema crie a Prática 2 duplicada se você clicar em salvar duas vezes.
+            ClienteReserva.objects.get_or_create(
+                reserva=reserva_dia_2,
+                cliente=cliente,
+                atividade=atividade, # A atividade continua sendo OWD/ADV!
+                numero_pratica=2,    # É ISSO QUE VAI IMPRIMIR "> PRÁTICA 2" NO BARCO!
+                defaults={
+                    'valor_cobrado': Decimal('0.00'), # Já pagou tudo no Dia 1
+                    'status_checkin': '', # Começa em branco para o Dia 2
+                    'observacao': f"VINCULADO À PRÁTICA 1 DO DIA {reserva.data.strftime('%d/%m/%Y')}",
+                    'is_cortesia': is_cortesia_bool
+                }
+            )
+
+        # 4. PAGAMENTOS (SINAL E CAIXA) - Permanece exatamente igual!
         cr.pagamentos.filter(descricao="Sinal/Adiantamento").delete()
 
         if i < len(tem_sinais) and tem_sinais[i] == "sim":
@@ -109,7 +150,6 @@ def processar_salvamento_reserva(dados_post):
                     recebedor=recebedores_sinal[i],
                     descricao="Sinal/Adiantamento"
                 )
-                # Se o sinal caiu na LOJA, joga direto para o Livro Caixa
                 if recebedores_sinal[i] == 'LOJA':
                     Caixa.objects.create(
                         data=reserva.data,
