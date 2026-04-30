@@ -271,16 +271,28 @@ quantidadeClientes.addEventListener('input', function () {
 containerClientes.addEventListener('input', e => {
     const card = e.target.closest('.mergulhador-card');
     if (!card || !e.target.name) return;
-    ReservaStore.processarRegraNegocio(card.getAttribute('data-id'), e.target.name, e.target.value, e.target);
+    
+    // Ignora os selects aqui para não rodar duas vezes
+    if (e.target.tagName !== 'SELECT') {
+        ReservaStore.processarRegraNegocio(card.getAttribute('data-id'), e.target.name, e.target.value, e.target);
+    }
 });
 
+// Escuta cliques e seleções (Selects e Checkboxes)
 containerClientes.addEventListener('change', e => {
     const card = e.target.closest('.mergulhador-card');
-    if (!card) return;
+    if (!card || !e.target.name) return;
     
+    // Regra do Checkbox do Pier
     if (e.target.classList.contains('check-pier')) {
         const valor = e.target.checked ? 'PIER' : '';
         ReservaStore.atualizarCampo(card.getAttribute('data-id'), 'status_checkin', valor);
+        return;
+    }
+
+    // AQUI ESTAVA O PROBLEMA! Garante que as dropdowns (Atividade, Cortesia) rodem a regra
+    if (e.target.tagName === 'SELECT') {
+        ReservaStore.processarRegraNegocio(card.getAttribute('data-id'), e.target.name, e.target.value, e.target);
     }
 });
 
@@ -347,7 +359,7 @@ function gerarTemplateCard(num, dados) {
                         </select>
                     </div>
                     <!-- A CAIXA ESCONDIDA DA PRÁTICA 2 (Começa com display:none) -->
-                    <div class="inputs field-group box-pratica2" style="display: none; width: 140px; background: #fef08a;">
+                    <div class="inputs field-group box-pratica2" style="display: ${dados.precisaPratica2 ? 'block' : 'none'}; width: 140px; background: #fef08a;">
                         <label style="color: #854d0e;"><span class="material-symbols-outlined" style="font-size: 14px;">calendar_month</span> Prática 2:</label>
                         <input type="date" name="dataPratica2" class="modern-input" value="${Utils.escapeHTML(dados.dataPratica2)}" style="background: transparent;">
                     </div>
