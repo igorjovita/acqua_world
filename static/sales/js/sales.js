@@ -130,23 +130,24 @@ const ReservaStore = {
             }
         }
 
-        // REGRA DA ATIVIDADE E PRÁTICA 2
         if (campo === 'atividade' && elementoDisparador) {
             const opcao = elementoDisparador.options[elementoDisparador.selectedIndex];
             const valorPadrao = opcao.getAttribute('data-valor');
-            const nomeAtividade = opcao.text.toUpperCase(); // Lê o texto (ex: "CURSO OWD")
+            
+            // Puxa o apelido exato e oculto que colocamos no HTML
+            const apelidoAtividade = opcao.getAttribute('data-apelido')?.toUpperCase() || '';
 
-            // 1. Atualiza o valor (Mas SOMENTE se não for Cortesia)
+            // 1. Atualiza o valor financeiro (Mas SOMENTE se não for Cortesia)
             if (valorPadrao && !cliente.valor && cliente.isCortesia === 'nao') {
                 this.atualizarCampo(id, 'valor', parseFloat(valorPadrao).toFixed(2));
             }
 
-            // 2. Inteligência da Prática 2: Procura as siglas OWD ou ADV no texto
-            if (nomeAtividade.includes('OWD') || nomeAtividade.includes('ADV')) {
+            // 2. Inteligência Exata da Prática 2: Agora é cravado!
+            if (apelidoAtividade === 'OWD' || apelidoAtividade === 'ADV') {
                 this.atualizarCampo(id, 'precisaPratica2', true);
             } else {
                 this.atualizarCampo(id, 'precisaPratica2', false);
-                this.atualizarCampo(id, 'dataPratica2', ''); // Limpa a data se o cara mudar de ideia
+                this.atualizarCampo(id, 'dataPratica2', ''); // Limpa a data se ele mudar pra BAT
             }
         }
     }
@@ -302,9 +303,9 @@ containerClientes.addEventListener('change', e => {
 function gerarTemplateCard(num, dados) {
     const isPier = dados.status_checkin === "PIER";
     
-    // Geração dinâmica de options usando os dados reais da variável 'atividades'
+    // Geração dinâmica de options com o data-apelido blindado
     const optionsAtiv = atividades.map(a => 
-        `<option value="${a.id}" data-valor="${a.valor_padrao}" ${dados.atividade == a.id ? 'selected' : ''}>${Utils.escapeHTML(a.apelido)}</option>`
+        `<option value="${a.id}" data-valor="${a.valor_padrao}" data-apelido="${Utils.escapeHTML(a.apelido)}" ${dados.atividade == a.id ? 'selected' : ''}>${Utils.escapeHTML(a.apelido)}</option>`
     ).join('');
 
     return `
