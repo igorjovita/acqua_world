@@ -28,12 +28,10 @@
         th { background-color: #eee; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .centro { text-align: center; }
         
-        
     </style>
 </head>
 <body onload="window.print()">
     
-
     <div class="cabecalho">
         <h1>Planilha de Operação</h1>
         <div class="info-linha">
@@ -49,13 +47,14 @@
         <thead>
             <tr>
                 <th style="width: 40px;" class="centro">Nº</th>
-                <th style="width: 24%;">Cliente</th>
-                <th style="width: 14%;">Telefone</th>
-                <th style="width: 20%;">Vendedor</th>
-                <th style="width: 10%;" class="centro">Tipo</th>
+                <th style="width: 22%;">Cliente</th>
+                <th style="width: 15%;">Observação</th>
+                <th style="width: 12%;">Telefone</th>
+                <th style="width: 14%;" class="centro">Vendedor</th>
+                <th style="width: 9%;" class="centro">Tipo</th>
                 <th style="width: 8%;" class="centro">Foto</th>
-                <th style="width: 14%;" class="centro">Staff</th>
-                <th style="width: 10%;" class="centro">Roupa</th>
+                <th style="width: 12%;" class="centro">Staff</th>
+                <th style="width: 8%;" class="centro">Roupa</th>
             </tr>
         </thead>
         <tbody>
@@ -70,24 +69,38 @@
                                 style="background-color: #fef08a !important;"
                             {% endif %}
                         >
-                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;">
-                                <span style="white-space: nowrap;">{{ op.cliente.nome|upper }}</span>
+                            <span style="white-space: nowrap;">
+                                {{ op.cliente.nome|upper }}
                                 
-                                {% if op.observacao %}
-                                    <span style="font-size: 8pt; font-weight: normal; font-style: italic; color: #444; white-space: nowrap; text-align: right; padding-right: 5px;">
-                                        * {{ op.observacao|upper }}
-                                    </span>
+                                <!-- A MÁGICA DA PRÁTICA 1 E 2 PARA CURSOS -->
+                                {% if op.atividade.categoria_comissao == 'CURSO' or 'OWD' in op.atividade.apelido or 'ADV' in op.atividade.apelido %}
+                                    <strong style="font-size: 9pt;"> > PRÁTICA {{ op.numero_pratica }}</strong>
                                 {% endif %}
-                            </div>
+                            </span>
                         </td>
-                        <td>{{ op.cliente.telefone|default:"-" }}</td>
-                        <td>{{ op.reserva.vendedor.nome }}</td>
+                        
+                        <!-- NOVA COLUNA DE OBSERVAÇÃO -->
+                        <td style="font-size: 8pt; color: #333;">{{ op.observacao|upper|default:"" }}</td>
+                        
+                        <!-- TELEFONE REDUZIDO -->
+                        <td class="centro">{{ op.cliente.telefone|default:"-" }}</td>
+                        
+                        <!-- VENDEDOR CENTRALIZADO E MAIÚSCULO -->
+                        <td class="centro">{{ op.reserva.vendedor.nome|upper|default:"-" }}</td>
+                        
+                        <!-- TIPO REDUZIDO -->
                         <td class="centro">{{ op.atividade.apelido }}</td>
+                        
                         <td class="centro" style="color: #0369a1; font-weight: bold;">{{ op.pacote_foto|default:"" }}</td>
-                        <td class="centro">{{ op.dm_responsavel.nome|default:"" }}</td>
+                        
+                        <!-- STAFF REDUZIDO -->
+                        <td class="centro">{{ op.dm_responsavel.nome|upper|default:"" }}</td>
+                        
+                        <!-- ROUPA REDUZIDA -->
                         <td class="centro">{{ op.cliente.altura|floatformat:2|default:"-" }}/{{ op.cliente.peso|floatformat:0|default:"-" }}</td>
                     {% else %}
-                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        <!-- Foram adicionados 8 TDs vazios para bater com as 9 colunas totais (1 do contador + 8 vazias) -->
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                     {% endif %}
                 </tr>
             {% endfor %}
