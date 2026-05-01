@@ -47,8 +47,8 @@
         <thead>
             <tr>
                 <th style="width: 40px;" class="centro">Nº</th>
-                <th style="width: 22%;">Cliente</th>
-                <th style="width: 21%;">Observação</th>
+                <th style="width: 28%;">Cliente</th>
+                <th style="width: 15%;">Observação</th>
                 <th style="width: 20%;" class="centro">Vendedor</th>
                 <th style="width: 9%;" class="centro">Tipo</th>
                 <th style="width: 8%;" class="centro">Foto</th>
@@ -73,7 +73,7 @@
                                 
                                 <!-- A MÁGICA DA PRÁTICA 1 E 2 PARA CURSOS -->
                                 {% if op.atividade.categoria_comissao == 'CURSO' or 'OWD' in op.atividade.apelido or 'ADV' in op.atividade.apelido %}
-                                    <span style="font-size: 9pt;">  > PRÁTICA {{ op.numero_pratica }}</span>
+                                    <span style="font-size: 9pt;"> > PRÁTICA {{ op.numero_pratica }}</span>
                                 {% endif %}
                             </span>
                         </td>
