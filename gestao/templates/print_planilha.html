@@ -48,9 +48,8 @@
             <tr>
                 <th style="width: 40px;" class="centro">Nº</th>
                 <th style="width: 22%;">Cliente</th>
-                <th style="width: 15%;">Observação</th>
-                <th style="width: 12%;">Telefone</th>
-                <th style="width: 14%;" class="centro">Vendedor</th>
+                <th style="width: 21%;">Observação</th>
+                <th style="width: 20%;" class="centro">Vendedor</th>
                 <th style="width: 9%;" class="centro">Tipo</th>
                 <th style="width: 8%;" class="centro">Foto</th>
                 <th style="width: 12%;" class="centro">Staff</th>
@@ -82,9 +81,6 @@
                         <!-- NOVA COLUNA DE OBSERVAÇÃO -->
                         <td class="centro" style="font-size: 8pt;">{{ op.observacao|upper|default:"" }}</td>
                         
-                        <!-- TELEFONE REDUZIDO -->
-                        <td class="centro">{{ op.cliente.telefone|default:"-" }}</td>
-                        
                         <!-- VENDEDOR CENTRALIZADO E MAIÚSCULO -->
                         <td class="centro">{{ op.reserva.vendedor.nome|upper|default:"-" }}</td>
                         
@@ -100,7 +96,7 @@
                         <td class="centro">{{ op.cliente.altura|floatformat:2|default:"-" }}/{{ op.cliente.peso|floatformat:0|default:"-" }}</td>
                     {% else %}
                         <!-- Foram adicionados 8 TDs vazios para bater com as 9 colunas totais (1 do contador + 8 vazias) -->
-                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                     {% endif %}
                 </tr>
             {% endfor %}
