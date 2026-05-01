@@ -300,9 +300,6 @@ containerClientes.addEventListener('change', e => {
     }
 });
 
-// =====================================================================
-// 6. TEMPLATES DE UI 
-// =====================================================================
 function gerarTemplateCard(num, dados) {
     const isPier = dados.status_checkin === "PIER";
     
@@ -362,7 +359,7 @@ function gerarTemplateCard(num, dados) {
                             ${optionsAtiv}
                         </select>
                     </div>
-                    <!-- A CAIXA ESCONDIDA DA PRÁTICA 2 (Começa com display:none) -->
+                    <!-- A CAIXA ESCONDIDA DA PRÁTICA 2 -->
                     <div class="inputs field-group box-pratica2" style="display: ${dados.precisaPratica2 ? 'block' : 'none'}; width: 140px; background: #fef08a;">
                         <label style="color: #854d0e;"><span class="material-symbols-outlined" style="font-size: 14px;">calendar_month</span> Prática 2:</label>
                         <input type="date" name="dataPratica2" class="modern-input" value="${Utils.escapeHTML(dados.dataPratica2)}" style="background: transparent;">
@@ -372,7 +369,6 @@ function gerarTemplateCard(num, dados) {
 
             <div class="secao-interna" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
                 <div class="fields-row" style="align-items: flex-end;">
-                    <!-- NOVO: CAMPO DE CORTESIA -->
                     <div class="inputs field-group" style="width: 100px;">
                         <label>Cortesia?</label>
                         <select name="isCortesia" class="modern-input">
@@ -395,7 +391,8 @@ function gerarTemplateCard(num, dados) {
                 </div>
             </div>
 
-            <div class="box-sinal-expandivel" style="display: none;">
+            <!-- A CORREÇÃO ESTÁ AQUI: max-height: none; overflow: visible; -->
+            <div class="box-sinal-expandivel" style="display: ${dados.temSinal === 'sim' ? 'block' : 'none'}; max-height: none; overflow: visible;">
                 <div class="fields-row" style="margin-bottom: 0;">
                     <div class="inputs field-group">
                         <label>Valor do Sinal (R$):</label>
