@@ -102,6 +102,9 @@ const ReservaStore = {
     processarRegraNegocio(id, campo, valor, elementoDisparador) {
         this.atualizarCampo(id, campo, valor);
 
+        const cliente = this.state.byId[id];
+        if (!cliente) return;
+
         // Regra 1: Atividade altera o Valor
         if (campo === 'atividade' && elementoDisparador) {
             const opcaoSelecionada = elementoDisparador.options[elementoDisparador.selectedIndex];
