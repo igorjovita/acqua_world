@@ -178,7 +178,10 @@ def processar_pagamentos_loja(dados_post):
     cr_referencia = ClienteReserva.objects.get(id=ids_passageiros[0])
     
     desc_extrato = f"Pagamento Parcial ({pagador})"
-    desc_caixa = f"PAGAMENTO: {cr_referencia.cliente.nome} + {len(ids_passageiros)-1}".upper()
+    if len(ids_passageiros) != 0:
+        desc_caixa = f"PAGAMENTO: {cr_referencia.cliente.nome}({cr_referencia.atividade.apelido}) + {len(ids_passageiros)-1}".upper()
+    else:
+        desc_caixa = f"PAGAMENTO: {cr_referencia.cliente.nome}({cr_referencia.atividade.apelido})".upper()
 
     p = Pagamento.objects.create(
         cliente_reserva=cr_referencia,
