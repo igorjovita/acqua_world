@@ -149,35 +149,42 @@ class ClienteReserva(models.Model):
         2) Calcula e persiste a comissão no banco de dados.
         """
         if self.reserva and self.atividade:
-            # Só calcula o neto se ele ainda não existir (ou seja, quando a reserva for criada)
-            # Assim, se o vendedor mudar a taxa no futuro, as vendas velhas ficam intactas.
-            if self.neto_praticado is None:
+            # BYPASS 1: Se for Prática > 1 ou Cortesia, zera a matemática
+            if self.numero_pratica > 1 or self.is_cortesia:
+                self.neto_praticado = Decimal('0.00')
+                self.comissao_calculada = Decimal('0.00')
+                self.valor_cobrado = Decimal('0.00')
+            
+            # Só calcula o neto se for Prática 1, Pagante, e se ainda não existir
+            elif self.neto_praticado is None:
                 vendedor = self.reserva.vendedor
-                categoria = self.atividade.categoria_comissao
                 
-                if categoria == 'BATISMO':
-                    self.neto_praticado = vendedor.neto_bat
-                elif categoria == 'ACOMPANHANTE':
-                    self.neto_praticado = vendedor.neto_acp
-                elif categoria == 'TURISMO_1':
-                    self.neto_praticado = vendedor.neto_turismo_1
-                elif categoria == 'TURISMO_2':
-                    self.neto_praticado = vendedor.neto_turismo_2
-                elif categoria == 'SCUBA_REVIEW':
-                    self.neto_praticado = vendedor.neto_scuba
-                elif categoria == 'CURSO':
-                    comissao_curso = self.valor_cobrado * (vendedor.neto_curso / Decimal('100.00'))
-                    self.neto_praticado = self.valor_cobrado - comissao_curso
+                # Se não houver vendedor, o neto é o valor total (A loja fica com 100%)
+                if not vendedor:
+                     self.neto_praticado = self.valor_cobrado
                 else:
-                    self.neto_praticado = self.valor_cobrado # Sem categoria = Neto integral
-            
-            # A comissão é sempre: (Valor que o cliente pagou) - (O que a loja retém congelado)
-            self.comissao_calculada = self.valor_cobrado - self.neto_praticado
-            
+                    categoria = self.atividade.categoria_comissao
+                    
+                    if categoria == 'BATISMO':
+                        self.neto_praticado = vendedor.neto_bat
+                    elif categoria == 'ACOMPANHANTE':
+                        self.neto_praticado = vendedor.neto_acp
+                    elif categoria == 'TURISMO_1':
+                        self.neto_praticado = vendedor.neto_turismo_1
+                    elif categoria == 'TURISMO_2':
+                        self.neto_praticado = vendedor.neto_turismo_2
+                    elif categoria == 'SCUBA_REVIEW':
+                        self.neto_praticado = vendedor.neto_scuba
+                    elif categoria == 'CURSO':
+                        comissao_curso = self.valor_cobrado * (vendedor.neto_curso / Decimal('100.00'))
+                        self.neto_praticado = self.valor_cobrado - comissao_curso
+                    else:
+                        self.neto_praticado = self.valor_cobrado # Sem categoria = Neto integral
+                
+                # A comissão é sempre: (Valor que o cliente pagou) - (O que a loja retém congelado)
+                self.comissao_calculada = self.valor_cobrado - self.neto_praticado
+                
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.cliente.nome} - {self.atividade.apelido}"
 
 class Pagamento(models.Model):
     FORMA_PG_CHOICES = [
