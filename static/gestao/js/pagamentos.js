@@ -269,23 +269,25 @@ function fecharModalAcerto() {
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     
-    // Se a URL mandar abrir o modal de uma reserva específica...
     if (params.get('auto_open') === 'true') {
         const reservaId = params.get('reserva_id');
+        console.log("Tentando abrir modal automaticamente para a reserva:", reservaId);
         
         if (reservaId) {
-            // Acha o botão "Receber" original dessa reserva na tabela.
-            // Para isso funcionar, você precisa garantir que o botão "Receber"
-            // da tabela de pagamentos tenha um ID, ex: id="btn-receber-{{ res.id }}"
+            // Tenta achar o botão na tabela
             const botaoReceber = document.getElementById(`btn-receber-${reservaId}`);
             
             if (botaoReceber) {
-                // Simula o clique, que vai puxar o JSON e abrir o modal normalmente
-                botaoReceber.click();
-                
-                // Limpa a URL (remove os parâmetros) para não ficar abrindo o modal 
-                // sozinho se o usuário der F5 na página de pagamentos
-                window.history.replaceState({}, document.title, window.location.pathname);
+                console.log("Botão encontrado! Simulando o clique...");
+                // Espera 100 milissegundos só para garantir que a tela terminou de pintar
+                setTimeout(() => {
+                    botaoReceber.click();
+                    
+                    // Limpa a URL para não reabrir se o usuário der F5
+                    window.history.replaceState({}, document.title, window.location.pathname + "?data=" + params.get('data'));
+                }, 100);
+            } else {
+                console.warn("ERRO: O botão btn-receber-" + reservaId + " não foi encontrado na tabela. Verifique se o filtro de data está correto.");
             }
         }
     }
