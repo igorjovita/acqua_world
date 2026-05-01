@@ -74,13 +74,13 @@
                                 
                                 <!-- A MÁGICA DA PRÁTICA 1 E 2 PARA CURSOS -->
                                 {% if op.atividade.categoria_comissao == 'CURSO' or 'OWD' in op.atividade.apelido or 'ADV' in op.atividade.apelido %}
-                                    <strong style="font-size: 9pt;"> > PRÁTICA {{ op.numero_pratica }}</strong>
+                                    <span style="font-size: 9pt;">  > PRÁTICA {{ op.numero_pratica }}</span>
                                 {% endif %}
                             </span>
                         </td>
                         
                         <!-- NOVA COLUNA DE OBSERVAÇÃO -->
-                        <td style="font-size: 8pt; color: #333;">{{ op.observacao|upper|default:"" }}</td>
+                        <td class="centro" style="font-size: 8pt;">{{ op.observacao|upper|default:"" }}</td>
                         
                         <!-- TELEFONE REDUZIDO -->
                         <td class="centro">{{ op.cliente.telefone|default:"-" }}</td>
