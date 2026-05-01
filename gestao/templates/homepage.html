@@ -146,6 +146,13 @@
                                     <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
                                 </button>
                             </form>
+
+                            <a href="{% url 'pagamentos' %}?reserva_id={{ op.reserva.id }}&auto_open=true&next=/" 
+                                class="btn-atalho-pagar" 
+                                style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none;"
+                                title="Lançar Pagamento">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">payments</span>
+                            </a>
                         </td>
                     </tr>
                     {% empty %}

@@ -24,12 +24,5 @@ urlpatterns = [
     path('cadastrar-vendedor/', cadastrar_vendedor, name='cadastrar_vendedor'),
 
 
-    # --- ROTAS TEMPORÁRIAS ---
-    # Apontando para a homepage apenas para o base.html não quebrar
-    path('links/', homepage, name='links_gerados'),
-    path('upload/', homepage, name='upload'),
-    path('staff/', homepage, name='staff'),
-    path('equipamentos/', homepage, name='painel_equipamentos'),
-    path('financeiro/', homepage, name='financeiro_dashboard'),
     path('sair/', homepage, name='logout'),
 ]

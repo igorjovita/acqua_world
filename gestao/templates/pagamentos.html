@@ -52,7 +52,7 @@
                         R$ {{ res.valor_a_receber|floatformat:2 }}
                     </td>
                     <td style="text-align: center;">
-                        <button class="btn-acao-icone {% if res.status == 'PAGO' %}btn-desabilitado{% endif %}" 
+                        <button id="btn-receber-{{ res.id }}" class="btn-acao-icone {% if res.status == 'PAGO' %}btn-desabilitado{% endif %}" 
                                 {% if res.status == 'PAGO' %}disabled{% endif %}
                                 onclick="abrirModalAcerto('{{ res.id }}', '{{ res.nome_exibicao }}', {{ res.valor_a_receber|stringformat:'f' }}, '{{ res.passageiros_json|escapejs }}', '{{ res.vendedor }}', '{{ res.historico_json|escapejs }}')">
                             <span class="material-symbols-outlined">payments</span>
@@ -71,6 +71,8 @@
                 {% csrf_token %}
                 <input type="hidden" name="reserva_id" id="modal-reserva-id">
                 <input type="hidden" name="pagamento_id_edicao" id="pagamento-id-edicao-pc">
+                <!-- Pega o parâmetro next (se existir) e injeta no POST -->
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
                 
                 <div class="modal-header">
                     <div>

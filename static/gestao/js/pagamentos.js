@@ -262,3 +262,31 @@ function fecharModalAcerto() {
     if(document.getElementById('modal-acerto')) document.getElementById('modal-acerto').style.display = 'none';
     if(document.getElementById('modal-acerto-mobile')) document.getElementById('modal-acerto-mobile').style.display = 'none';
 }
+
+// =====================================
+// AUTOLOAD DO MODAL (Vindo da Home)
+// =====================================
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Se a URL mandar abrir o modal de uma reserva específica...
+    if (params.get('auto_open') === 'true') {
+        const reservaId = params.get('reserva_id');
+        
+        if (reservaId) {
+            // Acha o botão "Receber" original dessa reserva na tabela.
+            // Para isso funcionar, você precisa garantir que o botão "Receber"
+            // da tabela de pagamentos tenha um ID, ex: id="btn-receber-{{ res.id }}"
+            const botaoReceber = document.getElementById(`btn-receber-${reservaId}`);
+            
+            if (botaoReceber) {
+                // Simula o clique, que vai puxar o JSON e abrir o modal normalmente
+                botaoReceber.click();
+                
+                // Limpa a URL (remove os parâmetros) para não ficar abrindo o modal 
+                // sozinho se o usuário der F5 na página de pagamentos
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    }
+});

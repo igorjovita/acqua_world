@@ -22,6 +22,11 @@ def pagamentos(request):
             if pagamento_id:
                 deletar_pagamento_loja(pagamento_id)
             processar_pagamentos_loja(request.POST)
+
+        next_url = request.POST.get('next')
+        
+        if next_url:
+            return redirect(next_url)
             
         return redirect('pagamentos')
 
