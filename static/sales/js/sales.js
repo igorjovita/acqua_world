@@ -213,9 +213,13 @@ function syncDOM(estado) {
         const inputsSinal = boxSinal.querySelectorAll('.input-req');
         if (cliente.temSinal === 'sim') {
             boxSinal.style.display = 'block';
+            boxSinal.style.opacity = '1';              // <-- MARRETA DE OPACIDADE
+            boxSinal.style.visibility = 'visible';
             inputsSinal.forEach(inp => inp.required = true);
         } else {
             boxSinal.style.display = 'none';
+            boxSinal.style.opacity = '0';
+            boxSinal.style.visibility = 'hidden';
             inputsSinal.forEach(inp => inp.required = false);
         }
 
@@ -392,7 +396,7 @@ function gerarTemplateCard(num, dados) {
             </div>
 
             <!-- A CORREÇÃO ESTÁ AQUI: max-height: none; overflow: visible; -->
-            <div class="box-sinal-expandivel" style="display: ${dados.temSinal === 'sim' ? 'block' : 'none'}; max-height: none; overflow: visible;">
+            <div class="box-sinal-expandivel" style="display: ${dados.temSinal === 'sim' ? 'block' : 'none'}; opacity: ${dados.temSinal === 'sim' ? '1' : '0'}; visibility: ${dados.temSinal === 'sim' ? 'visible' : 'hidden'}; transition: none; max-height: none; overflow: visible;">
                 <div class="fields-row" style="margin-bottom: 0;">
                     <div class="inputs field-group">
                         <label>Valor do Sinal (R$):</label>
