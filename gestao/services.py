@@ -132,7 +132,7 @@ def processar_salvamento_reserva(dados_post):
                 defaults={
                     'valor_cobrado': Decimal('0.00'), # Já pagou tudo no Dia 1
                     'status_checkin': '', # Começa em branco para o Dia 2
-                    'observacao': f"VINCULADO À PRÁTICA 1 DO DIA {reserva.data.strftime('%d/%m/%Y')}",
+                    'observacao': '',
                     'is_cortesia': is_cortesia_bool
                 }
             )
