@@ -484,3 +484,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// =====================================================================
+// CONTROLE DE MODAIS (Atividade e Vendedor)
+// =====================================================================
+
+function abrirModal(idModal) {
+    const modal = document.getElementById(idModal);
+    if (modal) {
+        // Geralmente modais usam 'flex' para centralizar na tela
+        modal.style.display = 'flex'; 
+    } else {
+        console.warn(`O modal com ID '${idModal}' não foi encontrado no HTML.`);
+    }
+}
+
+function fecharModal(idModal) {
+    const modal = document.getElementById(idModal);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Bônus de UX: Fecha o modal se o usuário clicar na área escura fora dele
+window.addEventListener('click', function(event) {
+    // Se o elemento clicado for exatamente o fundo escuro (modal-overlay)
+    if (event.target.classList.contains('modal-overlay')) {
+        event.target.style.display = 'none';
+    }
+});
