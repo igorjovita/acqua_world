@@ -55,8 +55,8 @@ def _preparar_contexto_homepage(request):
             filtro_data = amanha.strftime('%Y-%m-%d')
 
     operacoes = ClienteReserva.objects.select_related(
-        'cliente', 'reserva', 'reserva__vendedor', 'atividade'
-    ).all().order_by('cliente__nome')
+    'cliente', 'reserva', 'reserva__vendedor', 'atividade'
+    ).all().order_by('reserva__id', 'id')
 
     if filtro_data:
         operacoes = operacoes.filter(reserva__data=filtro_data)
