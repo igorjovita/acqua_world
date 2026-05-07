@@ -154,6 +154,10 @@ class ClienteReserva(models.Model):
                 self.neto_praticado = Decimal('0.00')
                 self.comissao_calculada = Decimal('0.00')
                 self.valor_cobrado = Decimal('0.00')
+
+            elif vendedor and vendedor.nome.upper() == 'ACQUAWORLD':
+                self.neto_praticado = self.valor_cobrado
+                self.comissao_calculada = Decimal('0.00')
             
             # Só calcula o neto se for Prática 1, Pagante, e se ainda não existir
             elif self.neto_praticado is None:
